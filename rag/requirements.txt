@@ -1,0 +1,6 @@
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+
+# Install CPU-only torch BEFORE this file to avoid the ~2 GB CUDA download:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r rag/requirements.txt

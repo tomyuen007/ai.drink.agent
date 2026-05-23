@@ -1,0 +1,53 @@
+# Secrets
+.env
+ui/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Generated PDFs
+docs/pdfs/
+
+# Scratch / temp notes
+scratch.txt
+
+# Data files
+*.csv
+*.xlsx
+*.duckdb
+data/
+samples/
+!samples/.gitkeep
+
+# Logs
+*.log
+
+# Claude Code session data
+.claude/
+
+# Claude Code session data
+.claude/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+terrorform/**/build/
+terrorform/**/.terraform/
+terrorform/**/*.tfstate
+terrorform/**/*.tfstate.backup
+terrorform/**/*.zip
+terrorform/**/.terraform.lock.hcl

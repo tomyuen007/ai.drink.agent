@@ -1,0 +1,7 @@
+# Weather agent server
+anthropic>=0.25.0
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-dotenv>=1.0.0
+mcp>=1.0.0
+mangum>=0.17.0

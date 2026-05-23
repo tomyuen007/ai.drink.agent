@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Weather AI",
+    "slug": "weather-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
+    "newArchEnabled": true
+  }
+}

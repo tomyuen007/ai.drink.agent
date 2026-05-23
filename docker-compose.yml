@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+
+  # ── LocalStack (AWS emulator) ────────────────────────────────────────────────
+  localstack:
+    profiles: [localstack, all]
+    image: localstack/localstack:latest
+    container_name: wine_localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=${LOCALSTACK_SERVICES:-s3,sqs,sns,dynamodb,secretsmanager,lambda}
+      - DEBUG=0
+      - DATA_DIR=/var/lib/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wine_net
+
+  # ── Microsoft SQL Server 2022 ─────────────────────────────────────────────────
+  mssql:
+    profiles: [mssql, all]
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: wine_mssql
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${MSSQL_SA_PASSWORD}
+      - MSSQL_PID=Express
+      - APP_USER_ADMIN=${APP_USER_ADMIN:-app_user_admin}
+      - APP_USER_ADMIN_PASSWORD=${APP_USER_ADMIN_PASSWORD:-123456}
+      - APP_USER_RW=${APP_USER_RW:-app_user_rw}
+      - APP_USER_RW_PASSWORD=${APP_USER_RW_PASSWORD:-123456}
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./docker/mssql/entrypoint.sh:/usr/local/bin/docker-entrypoint-init.sh
+      - ./docker/mssql/init.sql:/usr/local/bin/init.sql
+    entrypoint: ["/bin/bash", "/usr/local/bin/docker-entrypoint-init.sh"]
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${MSSQL_SA_PASSWORD}\" -Q 'SELECT 1' -b > /dev/null 2>&1 || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"${MSSQL_SA_PASSWORD}\" -Q 'SELECT 1' -b > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
+    networks:
+      - wine_net
+
+  # ── Oracle XE 21c ────────────────────────────────────────────────────────────
+  oracle:
+    profiles: [oracle, all]
+    image: gvenzl/oracle-xe:21-slim
+    container_name: wine_oracle
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    environment:
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_DATABASE=WINELIQUOR
+      - APP_USER_ADMIN=${APP_USER_ADMIN:-app_user_admin}
+      - APP_USER_ADMIN_PASSWORD=${APP_USER_ADMIN_PASSWORD:-123456}
+      - APP_USER_RW=${APP_USER_RW:-app_user_rw}
+      - APP_USER_RW_PASSWORD=${APP_USER_RW_PASSWORD:-123456}
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./docker/oracle/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 5m
+    networks:
+      - wine_net
+
+  # ── MySQL 8.0 ─────────────────────────────────────────────────────────────────
+  mysql:
+    profiles: [mysql, all]
+    image: mysql:8.0
+    container_name: wine_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=wine_liquor
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - APP_USER_ADMIN=${APP_USER_ADMIN:-app_user_admin}
+      - APP_USER_ADMIN_PASSWORD=${APP_USER_ADMIN_PASSWORD:-123456}
+      - APP_USER_RW=${APP_USER_RW:-app_user_rw}
+      - APP_USER_RW_PASSWORD=${APP_USER_RW_PASSWORD:-123456}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wine_net
+
+  # ── PostgreSQL 16 + pgvector ──────────────────────────────────────────────────
+  postgresql:
+    profiles: [postgresql, all]
+    image: pgvector/pgvector:pg16
+    container_name: wine_postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_DB=wine_liquor
+      - APP_USER_ADMIN=${APP_USER_ADMIN:-app_user_admin}
+      - APP_USER_ADMIN_PASSWORD=${APP_USER_ADMIN_PASSWORD:-123456}
+      - APP_USER_RW=${APP_USER_RW:-app_user_rw}
+      - APP_USER_RW_PASSWORD=${APP_USER_RW_PASSWORD:-123456}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - wine_net
+
+  # ── Firebase Emulator Suite ───────────────────────────────────────────────────
+  firebase:
+    profiles: [firebase, all]
+    image: node:18-alpine
+    container_name: wine_firebase
+    working_dir: /app
+    ports:
+      - "4000:4000"   # Emulator UI
+      - "9099:9099"   # Auth
+      - "8080:8080"   # Firestore
+      - "9000:9000"   # Realtime Database
+      - "9199:9199"   # Storage
+      - "5001:5001"   # Functions
+    environment:
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-demo-wine-liquor}
+    volumes:
+      - ./docker/firebase:/app/config:ro
+      - firebase_data:/app/data
+    command: ["sh", "/app/config/start.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000 > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 120s
+    networks:
+      - wine_net
+
+  # ── DuckDB (REST API wrapper) ─────────────────────────────────────────────────
+  duckdb:
+    profiles: [duckdb, all]
+    build:
+      context: .
+      dockerfile: docker/duckdb/Dockerfile
+    container_name: wine_duckdb
+    ports:
+      - "8000:8000"
+    environment:
+      - DUCKDB_DATA_DIR=/data
+    volumes:
+      - duckdb_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wine_net
+
+# ── Shared network ────────────────────────────────────────────────────────────
+networks:
+  wine_net:
+    driver: bridge
+    name: wine_liquor_network
+
+# ── Named volumes ──────────────────────────────────────────────────────────────
+volumes:
+  localstack_data:
+  mssql_data:
+  oracle_data:
+  mysql_data:
+  postgres_data:
+  firebase_data:
+  duckdb_data:

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "wmo_clear",
+    "category": "weather_conditions",
+    "text": "WMO code 0 means clear sky — perfect outdoor conditions. Codes 1-2 (mainly clear, partly cloudy) are still good. Code 3 (overcast) means full cloud cover but no precipitation."
+  },
+  {
+    "id": "wmo_precipitation",
+    "category": "weather_conditions",
+    "text": "WMO codes 51-55 are drizzle (light to dense). Codes 61-65 are rain (slight, moderate, heavy). Codes 71-77 are snow. Codes 80-82 are rain showers (slight to violent). Codes 95-99 are thunderstorms."
+  },
+  {
+    "id": "wmo_fog",
+    "category": "weather_conditions",
+    "text": "WMO codes 45 and 48 indicate fog. Code 45 is regular fog; code 48 is freezing fog which deposits ice on surfaces. Both reduce visibility significantly and make driving hazardous."
+  },
+  {
+    "id": "temperature_guide",
+    "category": "comfort",
+    "text": "Temperature comfort guide (Celsius): below -10°C is very cold, dress in heavy layers. -10 to 0°C is cold, winter coat required. 0-10°C is cool, jacket needed. 10-20°C is mild, light jacket comfortable. 20-25°C is warm and pleasant. 25-30°C is hot, stay hydrated. Above 30°C is very hot, limit outdoor exertion."
+  },
+  {
+    "id": "feels_like",
+    "category": "comfort",
+    "text": "The 'feels like' (apparent) temperature accounts for wind chill in cold weather and humidity in hot weather. When apparent temperature is much lower than actual, it means strong wind is making it feel colder. When it's much higher, high humidity is making it feel hotter."
+  },
+  {
+    "id": "uv_index",
+    "category": "health",
+    "text": "UV index guide: 0-2 (Low) — no protection needed. 3-5 (Moderate) — wear sunscreen SPF 30+. 6-7 (High) — seek shade during midday, wear hat and sunglasses. 8-10 (Very High) — minimize sun exposure 10am-4pm, full protection required. 11+ (Extreme) — avoid outdoor activity at midday."
+  },
+  {
+    "id": "wind_speed",
+    "category": "comfort",
+    "text": "Wind speed guide (km/h): 0-10 calm to light breeze, comfortable. 10-30 gentle to moderate breeze, pleasant but hair may blow. 30-50 fresh to strong breeze, harder to use umbrellas. 50-70 near gale, walking difficult. 70+ storm conditions, dangerous to be outdoors."
+  },
+  {
+    "id": "humidity",
+    "category": "comfort",
+    "text": "Relative humidity guide: below 30% is very dry — chapped lips, static electricity. 30-50% is comfortable and ideal. 50-70% is slightly humid, noticeable in summer. Above 70% feels muggy and sticky; sweat doesn't evaporate well. Above 90% is oppressively humid."
+  },
+  {
+    "id": "precipitation_probability",
+    "category": "planning",
+    "text": "Precipitation probability guide: 0-20% — unlikely, no umbrella needed. 20-40% — slight chance, umbrella optional. 40-60% — moderate chance, carry an umbrella. 60-80% — likely rain, definitely bring an umbrella. 80-100% — very likely to rain, plan indoor alternatives."
+  },
+  {
+    "id": "what_to_wear",
+    "category": "planning",
+    "text": "What to wear guide: Clear sky + 20-25°C — t-shirt and light pants. Rain + 15°C — rain jacket, waterproof shoes. Snow + below 0°C — heavy coat, gloves, boots. Wind above 40 km/h — windproof jacket. UV index 6+ — hat, sunglasses, sunscreen."
+  },
+  {
+    "id": "outdoor_activities",
+    "category": "planning",
+    "text": "Outdoor activity planning: Running is fine up to 28°C with low humidity; avoid thunderstorms and wind above 50 km/h. Cycling: avoid ice, heavy rain, and wind above 40 km/h. Picnics: best at 18-26°C, clear sky, precipitation probability below 20%. Beach: ideal at 28°C+, UV index 4-7 (wear protection), wind below 30 km/h."
+  }
+]

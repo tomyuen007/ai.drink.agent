@@ -11,5 +11,6 @@
     "resolveJsonModule": true,
     "jsx": "react-native",
     "noEmit": true
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"]
 }

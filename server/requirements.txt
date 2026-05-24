@@ -1,7 +1,17 @@
-# Weather agent server
+# ── Core (always required) ────────────────────────────────────────────────────
 anthropic>=0.25.0
+python-dotenv>=1.0.0
 fastapi>=0.110.0
 uvicorn>=0.29.0
-python-dotenv>=1.0.0
 mcp>=1.0.0
 mangum>=0.17.0
+
+# ── Per-provider (install only what you use) ──────────────────────────────────
+# LLM_PROVIDER=openai / groq / ollama / openai-compat
+openai>=1.30.0
+
+# LLM_PROVIDER=gemini
+google-genai>=1.0.0
+
+# LLM_PROVIDER=bedrock  (boto3 is large; comment out if not using AWS)
+boto3>=1.26.0

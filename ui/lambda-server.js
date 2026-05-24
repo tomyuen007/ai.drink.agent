@@ -13,7 +13,7 @@ if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
   module.exports.handler = serverless(app);
 } else {
   // Standalone mode — listen directly (npm run serve:lambda)
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.UI_PORT || process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`UI  →  http://localhost:${PORT}`);
     console.log(`      (serving ${DIST})`);

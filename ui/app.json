@@ -5,7 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "platforms": ["ios", "android", "web"],
-    "newArchEnabled": true
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }

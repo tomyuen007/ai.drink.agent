@@ -43,6 +43,8 @@ samples/
 # OS
 .DS_Store
 Thumbs.db
+~$*
+~$*
 
 # Terraform
 terrorform/**/build/
@@ -51,3 +53,6 @@ terrorform/**/*.tfstate
 terrorform/**/*.tfstate.backup
 terrorform/**/*.zip
 terrorform/**/.terraform.lock.hcl
+
+# Word temp files
+~$*

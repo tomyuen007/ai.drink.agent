@@ -68,6 +68,9 @@ wine.liquor/
 ├── rag/        # Python only — RAG layer (embeddings, vector store, retrieval)
 ├── mcp/        # Python only — MCP server (exposes tools to Claude)
 ├── agent/      # Python only — data cleaning and orchestration agents
+├── llm/        # Local LLM experiments
+│   ├── gpu/    # GPU-required models and code (CUDA, ROCm, etc.)
+│   └── nogpu/  # CPU-only models and code (Ollama, llama.cpp, etc.)
 ├── ui/         # Expo (React Native) app — iOS, Android, Web
 ├── scripts/    # All shell scripts (.sh)
 ├── samples/    # Downloaded sample datasets (gitignored)
@@ -79,6 +82,8 @@ wine.liquor/
 - Shared Python library files go in `lib/`
 - FastAPI servers go in `server/` — **Python only**
 - `rag/`, `mcp/`, and `agent/` are **Python only** — no TypeScript or shell scripts
+- `llm/gpu/` — GPU-specific LLM code only (CUDA, ROCm, quantized models requiring a GPU)
+- `llm/nogpu/` — CPU-only LLM code only (Ollama, llama.cpp, models that run without a GPU)
 - `ui/` is **Expo (React Native) only** — all frontend code uses Expo; no plain HTML/CSS/JS
 - All shell scripts go in `scripts/`
 - All downloaded sample data goes in `samples/`
@@ -168,99 +173,121 @@ print(response.content[0].text)
 
 ## LLM Provider Switching
 
-The project uses a unified `llm_client.py` wrapper that switches between Claude API and local Ollama based on `.env` settings. **No code changes needed to switch providers.**
+Both `lib/llm_client.py` (simple chat) and `server/weather_agent.py` (agentic tool-use loop) read a single env var. **No code changes are needed to switch providers.**
 
-### Strategy
-- **Daily dev/iteration** → Ollama (free, local, no API credits burned)
-- **Final testing + production** → Claude API (full quality)
+### Supported providers
 
-### .env file
+| `LLM_PROVIDER` | SDK/package | Tool use (agent) | Notes |
+|---|---|---|---|
+| `claude` | `anthropic` | ✓ | Default. Best tool-use quality |
+| `ollama` | `openai` | ✓ (model-dependent) | Free, fully local |
+| `openai` | `openai` | ✓ | GPT-4o and o-series |
+| `gemini` | `google-genai` | ✓ | Gemini 2.0 Flash / Pro |
+| `groq` | `openai` | ✓ | Fast inference, Llama / Mixtral |
+| `bedrock` | `boto3` | ✓ | AWS Bedrock Converse API |
+| `openai-compat` | `openai` | ✓ (model-dependent) | LM Studio, vLLM, Together AI, Azure |
+
+### .env — all provider keys
+
 ```env
-# Switch between "claude" or "ollama"
-LLM_PROVIDER=claude
+# ── Active provider ────────────────────────────────────────────────────────────
+LLM_PROVIDER=claude      # change this one line to switch providers
 
-# Claude settings
+# ── Anthropic Claude ────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY=sk-ant-...
 CLAUDE_MODEL=claude-sonnet-4-6
 
-# Ollama settings
+# ── Ollama (local) ──────────────────────────────────────────────────────────────
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
-```
 
-### llm_client.py — unified wrapper
-```python
-import os
-from dotenv import load_dotenv
-import anthropic
-import requests
+# ── OpenAI ──────────────────────────────────────────────────────────────────────
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o
 
-load_dotenv()
+# ── Google Gemini ────────────────────────────────────────────────────────────────
+GOOGLE_API_KEY=AIza...
+GEMINI_MODEL=gemini-2.0-flash
 
-PROVIDER = os.getenv("LLM_PROVIDER", "ollama")
+# ── Groq ────────────────────────────────────────────────────────────────────────
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=llama-3.3-70b-versatile
 
-def chat(prompt: str, system: str = None) -> str:
-    if PROVIDER == "claude":
-        return _claude_chat(prompt, system)
-    elif PROVIDER == "ollama":
-        return _ollama_chat(prompt, system)
-    else:
-        raise ValueError(f"Unknown provider: {PROVIDER}")
+# ── AWS Bedrock ──────────────────────────────────────────────────────────────────
+AWS_DEFAULT_REGION=us-east-1
+BEDROCK_MODEL=anthropic.claude-3-5-sonnet-20241022-v2:0
+# Credentials: set AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY,
+#              or use a named profile in ~/.aws/credentials,
+#              or attach an IAM role (EC2/Lambda/ECS).
 
-def _claude_chat(prompt: str, system: str = None) -> str:
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env
-    kwargs = {
-        "model": os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6"),
-        "max_tokens": 1024,
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    if system:
-        kwargs["system"] = system
-    response = client.messages.create(**kwargs)
-    return response.content[0].text
-
-def _ollama_chat(prompt: str, system: str = None) -> str:
-    payload = {
-        "model": os.getenv("OLLAMA_MODEL", "llama3.2"),
-        "prompt": prompt,
-        "stream": False,
-    }
-    if system:
-        payload["system"] = system
-    response = requests.post(
-        f"{os.getenv('OLLAMA_BASE_URL')}/api/generate",
-        json=payload
-    )
-    return response.json()["response"]
+# ── OpenAI-compatible (LM Studio, vLLM, Together AI, Azure OpenAI…) ────────────
+OPENAI_COMPAT_BASE_URL=http://localhost:1234/v1
+OPENAI_COMPAT_API_KEY=lm-studio
+OPENAI_COMPAT_MODEL=local-model
 ```
 
 ### Usage in project code (never changes regardless of provider)
-```python
-from llm_client import chat
 
-result = chat(
+```python
+from lib.llm_client import LLMClient
+
+llm = LLMClient()   # reads LLM_PROVIDER from .env
+result = llm.chat(
     prompt="Clean this wine record: Chardonnay, napa, 2019, $45.00",
-    system="You are a data cleaning agent for wine records."
+    system="You are a data cleaning agent for wine records.",
 )
 print(result)
+
+# Override provider or model at runtime without touching .env:
+llm = LLMClient(provider="groq", model="mixtral-8x7b-32768")
 ```
 
-### Install dependencies
-```cmd
-pip install anthropic python-dotenv requests
+### Install per-provider dependencies
+
+Only install what you use — all are optional except `anthropic`:
+
+```bash
+# Claude (default — already in requirements)
+pip install anthropic
+
+# Ollama / OpenAI / Groq / openai-compat  (one package covers all four)
+pip install openai
+
+# Google Gemini
+pip install google-genai
+
+# AWS Bedrock  (large; skip if not using AWS)
+pip install boto3
 ```
 
-### Ollama setup (Windows)
-```cmd
+### Ollama setup (Windows / WSL)
+
+```bash
+# Install and start Ollama
 winget install Ollama.Ollama
-ollama pull llama3.2
-ollama run llama3.2
+ollama pull llama3.2        # or: gemma3, mistral, phi4, deepseek-r1, etc.
+ollama serve                # starts the API on port 11434
+
+# Confirm it's running
+curl http://localhost:11434/api/tags
 ```
+
+### Strategy
+
+| Use case | Provider |
+|---|---|
+| Daily dev / iteration | `ollama` — free, local, no API spend |
+| Fast cloud inference | `groq` — near-instant, generous free tier |
+| Best quality (production) | `claude` — claude-sonnet-4-6 or claude-opus-4-7 |
+| Google ecosystem / multimodal | `gemini` — gemini-2.0-flash or gemini-1.5-pro |
+| Enterprise / AWS-native | `bedrock` — any Claude or Llama model via AWS |
+| Custom / self-hosted | `openai-compat` — point at any OpenAI-format server |
 
 ### API key isolation strategy
-- **Claude CLI** → authenticates via `claude login` (uses Claude Pro subscription)
-- **Project code** → reads `ANTHROPIC_API_KEY` from `.env` file (uses prepaid API credits)
-- **ANTHROPIC_API_KEY is NOT set as a Windows system/user environment variable** — only lives in `.env` to prevent Claude CLI from accidentally consuming API credits
+
+- **Claude CLI** → authenticates via `claude login` (Claude Pro subscription)
+- **Project code** → reads `ANTHROPIC_API_KEY` from `.env` (prepaid API credits)
+- `ANTHROPIC_API_KEY` is **not** set as a system environment variable — only in `.env` — so the CLI never accidentally burns API credits
 
 ---
 
@@ -617,6 +644,41 @@ cd terrorform/agent && terraform apply
 ### Always run Terraform from WSL
 
 The `local-exec` provisioner uses `bash`. Run all `terraform` commands from a WSL terminal, not Windows cmd or PowerShell.
+
+---
+
+## UI — Settings Sync Contract
+
+Every settings field lives in four places that must stay identical. **Any time a field is added, renamed, or removed, update all four.**
+
+### The four locations
+
+| # | File | What to change |
+|---|------|----------------|
+| 1 | `ui/store/slices/settingsSlice.ts` | Add/remove from `SettingsState` interface, `initialState`, `reducers` (setter action), and `resetSettings` reducer |
+| 2 | `ui/lib/envState.ts` | Add/remove from `SyncPayload.settings` type and the `if (settings)` block inside `applyPayload()` |
+| 3 | `ui/.env` | Add/remove the field in the `EXPO_PUBLIC_APP_STATES` JSON under `"settings"` |
+| 4 | `ui/components/SyncStatesModal.tsx` | Add/remove the field in the `PLACEHOLDER` constant under `settings` |
+
+### Current settings fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `online` | `boolean` | `true` (`EXPO_PUBLIC_ONLINE=1`) | Live API calls vs. offline/env-only mode |
+| `stateSync` | `boolean` | `true` (`EXPO_PUBLIC_STATE_SYNC=1`) | Seed Redux from `.env` on each launch |
+| `theme` | `"system" \| "light" \| "dark"` | `"system"` | UI colour scheme |
+| `notifications` | `boolean` | `true` | Weather alerts and push notifications |
+| `defaultCity` | `string` | `""` | Pre-fills the city field in Weather AI |
+| `defaultPage` | `"home" \| "weather-ai"` | `"home"` | Page shown on launch / after login |
+| `llmProvider` | `"env-default" \| "claude" \| "openai" \| "gemini" \| "groq" \| "ollama" \| "bedrock" \| "openai-compat"` | `"env-default"` | LLM sent to `/ask`; `env-default` means use server's `LLM_PROVIDER` |
+| `fontFamily` | `"system" \| "serif" \| "monospace"` | `"system"` | Base font family applied via `AppText` |
+| `fontSize` | `"small" \| "medium" \| "large" \| "xl"` | `"medium"` | Base font size (13/15/17/19 px); explicit `style.fontSize` overrides |
+| `fontWeight` | `"light" \| "regular" \| "medium" \| "bold"` | `"regular"` | Base weight (300/400/500/700); explicit NativeWind weight classes override |
+| `fontStyle` | `"normal" \| "italic"` | `"normal"` | Applied to all `AppText`; per-component styles override |
+
+### Why this rule exists
+
+`resetSettings` (the "Clear Settings" path) and `applyPayload` (the "Default Settings" / paste-JSON path) must cover every field or stale values will survive a reset. The `.env` sample and the modal placeholder exist to guide developers and end-users — they must reflect the live schema or they silently produce partial payloads that miss new fields.
 
 ---
 

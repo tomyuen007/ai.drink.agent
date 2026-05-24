@@ -1,8 +1,19 @@
 locals {
   root = abspath("${path.module}/../..")
+
+  # Parse .env into a map — skip blank lines and comments
+  _raw_lines = split("\n", file("${local.root}/.env"))
+  _kv_lines = [
+    for l in local._raw_lines
+    : l if length(trimspace(l)) > 0 && !startswith(trimspace(l), "#")
+  ]
+  env_map = {
+    for l in local._kv_lines
+    : trimspace(split("=", l)[0]) =>
+      trimspace(join("=", slice(split("=", l), 1, length(split("=", l)))))
+  }
 }
 
-# Read layer ARNs from the layers/ state — layers must be deployed first
 data "terraform_remote_state" "layers" {
   backend = "s3"
   config = {
@@ -28,12 +39,5 @@ module "agent" {
     data.terraform_remote_state.layers.outputs.deps_layer_arn,
   ]
 
-  env_vars = {
-    ANTHROPIC_API_KEY = var.anthropic_api_key
-    ANTHROPIC_MODEL   = "claude-sonnet-4-6"
-    POSTGRES_HOST     = var.postgres_host
-    POSTGRES_DB       = var.postgres_db
-    POSTGRES_USER     = var.postgres_user
-    POSTGRES_PASSWORD = var.postgres_password
-  }
+  env_vars = local.env_map
 }

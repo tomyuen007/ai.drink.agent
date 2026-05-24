@@ -1,0 +1,114 @@
+{
+  // VS Code debug configurations for Weather AI (Expo SDK 52 / RN 0.76 / Hermes)
+  //
+  // Prerequisites — install these VS Code extensions:
+  //   expo.vscode-expo-tools       (Expo Tools)
+  //   msjsdiag.vscode-react-native (React Native Tools)
+  //
+  // Before launching any config:
+  //   Web    → run debug-web.sh first, wait for http://localhost:8081
+  //   iOS    → run debug-ios.sh first, wait for simulator to open the app
+  //   Android→ run debug-android.sh first, wait for emulator to open the app
+  "version": "0.2.0",
+  "configurations": [
+
+    // ── Web ──────────────────────────────────────────────────────────────────
+
+    {
+      // Launches a new Chrome window at localhost:8081 with the debugger
+      // attached. Source maps are resolved automatically from the Expo bundler.
+      "name": "Debug: Web — Launch Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8081",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./*":   "${workspaceFolder}/*",
+        "webpack:///./~/*": "${workspaceFolder}/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ]
+    },
+
+    {
+      // Attaches to an existing Chrome instance that was started with
+      //   google-chrome --remote-debugging-port=9222
+      //   (or: npx expo start --web, then open Chrome via the QR/URL)
+      // Use this to keep your Chrome session alive between debug restarts.
+      "name": "Debug: Web — Attach Chrome",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:8081/*",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ]
+    },
+
+    // ── iOS ──────────────────────────────────────────────────────────────────
+
+    {
+      // Attaches the Hermes/CDP debugger to the iOS Simulator.
+      // Start debug-ios.sh first and wait for the app to load.
+      // If connection fails: Cmd+Ctrl+Z in simulator → "Open JS Debugger".
+      "name": "Debug: iOS — Hermes",
+      "type": "reactnativedirect",
+      "request": "launch",
+      "platform": "ios",
+      "target": "simulator",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "metro://ProjectRoot/*": "${workspaceFolder}/*",
+        "/__metro_bundle_path__*": "${workspaceFolder}/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ]
+    },
+
+    // ── Android ──────────────────────────────────────────────────────────────
+
+    {
+      // Attaches the Hermes/CDP debugger to the Android Emulator via ADB.
+      // Start debug-android.sh first and wait for the app to load.
+      // If connection fails: Ctrl+M in emulator → "Open JS Debugger".
+      "name": "Debug: Android — Hermes",
+      "type": "reactnativedirect",
+      "request": "launch",
+      "platform": "android",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "metro://ProjectRoot/*": "${workspaceFolder}/*",
+        "/__metro_bundle_path__*": "${workspaceFolder}/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ]
+    },
+
+    // ── Attach (any running app) ──────────────────────────────────────────────
+
+    {
+      // Attaches to any already-running React Native app (iOS or Android)
+      // that is in dev/debug mode. Use when the app is open and you want
+      // to attach without relaunching the simulator or emulator.
+      "name": "Debug: Attach to Running App",
+      "type": "reactnativedirect",
+      "request": "attach",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/node_modules/**"
+      ]
+    }
+
+  ]
+}

@@ -20,7 +20,6 @@ const TRACKED = new Set([
   "settings/setFontWeight",
   "settings/setFontStyle",
   "settings/resetSettings",
-  "navigation/navigate",
 ]);
 
 function buildEntry(type: string, payload: unknown): HistoryEntry {
@@ -51,12 +50,6 @@ function buildEntry(type: string, payload: unknown): HistoryEntry {
     }
     case "user/clearUser":
       return { type: "user_logout", label: "User logged out" };
-    case "navigation/navigate":
-      return {
-        type: "navigation",
-        label: `Navigate → ${String(payload)}`,
-        data: { page: String(payload) },
-      };
     case "settings/resetSettings":
       return { type: "setting_change", label: "Settings reset to defaults" };
     default: {

@@ -3,15 +3,16 @@ import { Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { S } from "../lib/styles";
 import Menu from "../components/Menu";
-import { useUser, useNavigation } from "../store/hooks";
+import { useRouter } from "expo-router";
+import { useUser } from "../store/hooks";
 
 export default function LogoutPage() {
   const { email, phone, logout, isLoggedIn } = useUser();
-  const { navigate }                         = useNavigation();
+  const router                               = useRouter();
 
   function handleLogout() {
     logout();
-    navigate("login");
+    router.replace("/login");
   }
 
   return (
@@ -49,7 +50,7 @@ export default function LogoutPage() {
             <Text className={S.logoutButtonText}>Log Out</Text>
           </Pressable>
 
-          <Pressable className={S.linkButton} onPress={() => navigate("sign-up")}>
+          <Pressable className={S.linkButton} onPress={() => router.push("/sign-up")}>
             <Text className={S.linkButtonText}>Create a new account</Text>
           </Pressable>
         </View>

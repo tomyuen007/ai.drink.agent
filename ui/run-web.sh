@@ -12,6 +12,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+if [[ ! -d node_modules ]]; then
+  echo "node_modules not found — running npm install..."
+  npm install
+  echo ""
+fi
+
 echo "Starting Weather AI — Web"
 echo "URL: http://localhost:8081"
 echo "Press Ctrl+C to stop."

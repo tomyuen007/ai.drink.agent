@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    // Expo-specific IntelliSense, app.json schema, file linking, and
+    // required for the reactnativedirect debug type in launch.json.
+    "expo.vscode-expo-tools",
+
+    // iOS and Android Hermes/CDP debugger attachment.
+    // Provides the "reactnativedirect" debug type used in launch.json.
+    "msjsdiag.vscode-react-native",
+
+    // Improved source map resolution for web debugging.
+    // Without this, TypeScript breakpoints on web may miss by one line.
+    "ms-vscode.js-debug-nightly"
+  ]
+}

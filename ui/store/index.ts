@@ -4,11 +4,10 @@ import {
 } from "redux-persist";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import weatherReducer    from "./slices/weatherSlice";
-import questionsReducer  from "./slices/questionsSlice";
-import navigationReducer from "./slices/navigationSlice";
-import userReducer       from "./slices/userSlice";
-import settingsReducer   from "./slices/settingsSlice";
+import weatherReducer   from "./slices/weatherSlice";
+import questionsReducer from "./slices/questionsSlice";
+import userReducer      from "./slices/userSlice";
+import settingsReducer  from "./slices/settingsSlice";
 import { historyMiddleware } from "./middleware/historyMiddleware";
 
 const weatherPersistConfig = {
@@ -33,11 +32,10 @@ const settingsPersistConfig = {
 };
 
 const rootReducer = combineReducers({
-  weather:    persistReducer(weatherPersistConfig, weatherReducer),
-  questions:  persistReducer(questionsPersistConfig, questionsReducer),
-  navigation: navigationReducer,
-  user:       persistReducer(userPersistConfig, userReducer),
-  settings:   persistReducer(settingsPersistConfig, settingsReducer),
+  weather:   persistReducer(weatherPersistConfig, weatherReducer),
+  questions: persistReducer(questionsPersistConfig, questionsReducer),
+  user:      persistReducer(userPersistConfig, userReducer),
+  settings:  persistReducer(settingsPersistConfig, settingsReducer),
 });
 
 export const store = configureStore({

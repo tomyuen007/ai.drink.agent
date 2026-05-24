@@ -23,6 +23,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+if [[ ! -d node_modules ]]; then
+  echo "node_modules not found — running npm install..."
+  npm install
+  echo ""
+fi
+
 echo "Starting Weather AI — Web (debug mode)"
 echo "Bundler URL:  http://localhost:8081"
 echo ""

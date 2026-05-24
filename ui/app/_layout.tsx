@@ -1,16 +1,16 @@
-import "./global.css";
+import "../global.css";
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { Slot } from "expo-router";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { store, persistor } from "./store";
-import PageRouter from "./PageRouter";
-import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { syncStateFromEnv, isEnvStateAvailable } from "./lib/envState";
-import SyncStatesModal from "./components/SyncStatesModal";
-import type { ISyncStates } from "./lib/SyncStates";
-import { FontProvider } from "./lib/FontContext";
-import { initDb } from "./lib/db";
+import { store, persistor } from "../store";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { syncStateFromEnv, isEnvStateAvailable } from "../lib/envState";
+import SyncStatesModal from "../components/SyncStatesModal";
+import type { ISyncStates } from "../lib/SyncStates";
+import { FontProvider } from "../lib/FontContext";
+import { initDb } from "../lib/db";
 
 function AppInit() {
   const dispatch  = useAppDispatch();
@@ -28,8 +28,7 @@ function AppInit() {
       }
     }
     init();
-  // runs once after PersistGate hydration completes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -50,13 +49,13 @@ function Loading() {
   );
 }
 
-export default function App() {
+export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={<Loading />} persistor={persistor}>
         <FontProvider>
           <AppInit />
-          <PageRouter />
+          <Slot />
         </FontProvider>
       </PersistGate>
     </Provider>

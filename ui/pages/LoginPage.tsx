@@ -4,10 +4,10 @@ import { StatusBar } from "expo-status-bar";
 import { S } from "../lib/styles";
 import Menu from "../components/Menu";
 import LoginForm from "../components/LoginForm";
-import { useNavigation } from "../store/hooks";
+import { useRouter } from "expo-router";
 
 export default function LoginPage() {
-  const { navigate } = useNavigation();
+  const router = useRouter();
 
   return (
     <View className={S.container}>
@@ -22,7 +22,7 @@ export default function LoginPage() {
           <Text className={S.authTitle}>Welcome back</Text>
           <Text className={S.authSubtitle}>Log in to continue</Text>
           <LoginForm />
-          <Pressable className={S.linkButton} onPress={() => navigate("sign-up")}>
+          <Pressable className={S.linkButton} onPress={() => router.push("/sign-up")}>
             <Text className={S.linkButtonText}>Don't have an account? Sign up</Text>
           </Pressable>
         </View>

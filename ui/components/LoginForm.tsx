@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { S } from "../lib/styles";
-import { useUser, useNavigation, useAppSelector } from "../store/hooks";
-import type { AppPage } from "../store/slices/navigationSlice";
+import { useUser, useAppSelector } from "../store/hooks";
 
 export default function LoginForm() {
   const [value, setValue]   = useState("");
   const [error, setError]   = useState("");
   const { login }           = useUser();
-  const { navigate }        = useNavigation();
+  const router              = useRouter();
   const defaultPage         = useAppSelector((s) => s.settings.defaultPage);
 
   function submit() {
@@ -19,7 +19,7 @@ export default function LoginForm() {
     }
     const isEmail = trimmed.includes("@");
     login(isEmail ? { email: trimmed } : { phone: trimmed });
-    navigate(defaultPage as AppPage);
+    router.replace(defaultPage === "weather-ai" ? "/weather-ai" : "/home");
   }
 
   return (

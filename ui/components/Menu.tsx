@@ -1,36 +1,36 @@
 import React, { useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { S } from "../lib/styles";
-import { useNavigation, useUser } from "../store/hooks";
-import type { AppPage } from "../store/slices/navigationSlice";
+import { useUser } from "../store/hooks";
 
 interface MenuItem {
   label: string;
-  page:  AppPage;
+  href:  string;
 }
 
 const LOGGED_IN_ITEMS: MenuItem[] = [
-  { label: "Home",       page: "home" },
-  { label: "Weather AI", page: "weather-ai" },
-  { label: "History",    page: "history" },
-  { label: "Settings",   page: "settings" },
-  { label: "Account",    page: "logout" },
+  { label: "Home",       href: "/home"       },
+  { label: "Weather AI", href: "/weather-ai" },
+  { label: "History",    href: "/history"    },
+  { label: "Settings",   href: "/settings"   },
+  { label: "Account",    href: "/logout"     },
 ];
 
 const LOGGED_OUT_ITEMS: MenuItem[] = [
-  { label: "Log In",  page: "login" },
-  { label: "Sign Up", page: "sign-up" },
+  { label: "Log In",  href: "/login"    },
+  { label: "Sign Up", href: "/sign-up"  },
 ];
 
 export default function Menu() {
-  const [open, setOpen]    = useState(false);
-  const { navigate }       = useNavigation();
-  const { isLoggedIn }     = useUser();
-  const items              = isLoggedIn ? LOGGED_IN_ITEMS : LOGGED_OUT_ITEMS;
+  const [open, setOpen] = useState(false);
+  const router          = useRouter();
+  const { isLoggedIn }  = useUser();
+  const items           = isLoggedIn ? LOGGED_IN_ITEMS : LOGGED_OUT_ITEMS;
 
-  function go(page: AppPage) {
+  function go(href: string) {
     setOpen(false);
-    navigate(page);
+    router.push(href);
   }
 
   return (
@@ -52,7 +52,7 @@ export default function Menu() {
             </Pressable>
             <Text className={S.menuHeading}>Menu</Text>
             {items.map((item) => (
-              <Pressable key={item.page} className={S.menuItem} onPress={() => go(item.page)}>
+              <Pressable key={item.href} className={S.menuItem} onPress={() => go(item.href)}>
                 <Text className={S.menuItemText}>{item.label}</Text>
               </Pressable>
             ))}

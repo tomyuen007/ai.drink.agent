@@ -2,11 +2,11 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { S } from "../lib/styles";
-import { useNavigation } from "../store/hooks";
+import { useRouter } from "expo-router";
 import Menu from "../components/Menu";
 
 export default function HomePage() {
-  const { navigate } = useNavigation();
+  const router = useRouter();
 
   return (
     <View className={S.container}>
@@ -24,7 +24,7 @@ export default function HomePage() {
           Ask Claude about the weather anywhere in the world,{"\n"}
           powered by MCP, RAG, and Open-Meteo.
         </Text>
-        <Pressable className={S.mainCTA} onPress={() => navigate("weather-ai")}>
+        <Pressable className={S.mainCTA} onPress={() => router.push("/weather-ai")}>
           <Text className={S.mainCTAText}>Open Weather AI</Text>
         </Pressable>
       </View>

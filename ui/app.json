@@ -2,6 +2,7 @@
   "expo": {
     "name": "Weather AI",
     "slug": "weather-ai",
+    "scheme": "weather-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -12,6 +13,7 @@
     ],
     "newArchEnabled": true,
     "plugins": [
+      "expo-router",
       "expo-sqlite"
     ]
   }

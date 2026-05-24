@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { S } from "../lib/styles";
-import { useUser, useNavigation, useAppSelector } from "../store/hooks";
-import type { AppPage } from "../store/slices/navigationSlice";
+import { useUser, useAppSelector } from "../store/hooks";
 
 export default function SignUpForm() {
   const [email, setEmail]   = useState("");
   const [phone, setPhone]   = useState("");
   const [error, setError]   = useState("");
   const { login }           = useUser();
-  const { navigate }        = useNavigation();
+  const router              = useRouter();
   const defaultPage         = useAppSelector((s) => s.settings.defaultPage);
 
   function submit() {
@@ -20,7 +20,7 @@ export default function SignUpForm() {
       return;
     }
     login({ email: e, phone: p });
-    navigate(defaultPage as AppPage);
+    router.replace(defaultPage === "weather-ai" ? "/weather-ai" : "/home");
   }
 
   return (

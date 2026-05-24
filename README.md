@@ -72,6 +72,7 @@ wine.liquor/
 │   ├── gpu/    # GPU-required models and code (CUDA, ROCm, etc.)
 │   └── nogpu/  # CPU-only models and code (Ollama, llama.cpp, etc.)
 ├── ui/         # Expo (React Native) app — iOS, Android, Web
+│   └── docs/   # UI design docs and page renders — ui.docx, _preview.html, etc.
 ├── scripts/    # All shell scripts (.sh)
 ├── samples/    # Downloaded sample datasets (gitignored)
 ├── docker/     # Docker service configs (PostgreSQL, DuckDB, Firebase, etc.)
@@ -85,6 +86,7 @@ wine.liquor/
 - `llm/gpu/` — GPU-specific LLM code only (CUDA, ROCm, quantized models requiring a GPU)
 - `llm/nogpu/` — CPU-only LLM code only (Ollama, llama.cpp, models that run without a GPU)
 - `ui/` is **Expo (React Native) only** — all frontend code uses Expo; no plain HTML/CSS/JS
+- `ui/docs/` — all UI design documents and page renders go here (Word docs, HTML mockups, screenshots, wireframes). Never put these files in the `ui/` root.
 - All shell scripts go in `scripts/`
 - All downloaded sample data goes in `samples/`
 - All generated PDFs go in `docs/pdfs/` (gitignored)
@@ -148,6 +150,47 @@ npx expo install expo-sqlite @react-native-async-storage/async-storage
 ```
 
 **Why clean install?** `npx create-expo-app` always starts from an empty folder — no conflicts. When upgrading an *existing* project, old packages (e.g., React 18) sit in `node_modules` and cause npm's strict peer-dep resolver to fail with ERESOLVE. Deleting `node_modules` first gives npm the same clean slate as `create-expo-app` and makes `npm install` work without any flags.
+
+---
+
+## UI Design Docs — `ui/docs/`
+
+**Decision (2026-05-24):** All UI design documents and page renders live in `ui/docs/`. This folder is tracked in git. Never place design files loose in the `ui/` root.
+
+### What goes in `ui/docs/`
+
+| File type | Examples |
+|-----------|----------|
+| Word / design documents | `ui.docx` |
+| Static HTML mockups / page renders | `_preview.html` |
+| Screenshots and wireframes | `*.png`, `*.jpg` |
+| Any other UI design artifact | PDFs, Figma exports |
+
+### Current contents
+
+| File | Description |
+|------|-------------|
+| `ui/docs/ui.docx` | UI design document — screen layouts and component specs |
+| `ui/docs/_preview.html` | Static HTML render of the Weather AI page (Tailwind CDN, no build step) |
+
+### How to add a new page render
+
+1. Create a plain HTML file using Tailwind CDN (no build required):
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+     <meta charset="UTF-8"/>
+     <script src="https://cdn.tailwindcss.com"></script>
+   </head>
+   <body>
+     <!-- page mockup here -->
+   </body>
+   </html>
+   ```
+2. Save it as `ui/docs/<page-name>.html`
+3. Open in any browser to preview — no server needed
+4. Commit alongside the corresponding Expo screen changes
 
 ---
 

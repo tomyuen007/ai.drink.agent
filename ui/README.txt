@@ -28,6 +28,7 @@ TABLE OF CONTENTS
   7.  Offline Mode (ONLINE=0)
   8.  LLM Provider Selection
   9.  Troubleshooting
+ 10.  UI Design Docs (ui/docs/)
 
 
 ================================================================================
@@ -1204,3 +1205,73 @@ SQLite history not persisting on web
   -> OPFS requires a secure context (https:// or localhost)
   -> Ensure browser supports OPFS: Chrome 102+, Edge 102+, Firefox 111+
   -> Private/incognito mode may block OPFS — use a normal window
+
+
+================================================================================
+10. UI DESIGN DOCS  (ui/docs/)
+================================================================================
+
+All UI design documents and static page renders live in ui/docs/.
+This folder is tracked in git. Do not place design files loose in ui/ root.
+
+------------------------------------------------------------------------
+Current files
+------------------------------------------------------------------------
+
+  ui/docs/ui.docx
+    Word document — screen layouts, component specs, and design decisions
+    for the Weather AI Expo app.
+
+  ui/docs/_preview.html
+    Static HTML render of the Weather AI main screen.
+    Uses Tailwind CSS via CDN — open in any browser, no build step needed.
+    Open it with:
+      open ui/docs/_preview.html          # macOS
+      start ui/docs/_preview.html         # Windows
+      xdg-open ui/docs/_preview.html      # Linux / WSL
+
+------------------------------------------------------------------------
+Adding a new page render
+------------------------------------------------------------------------
+
+When designing a new screen, create a static HTML mockup here before
+building the Expo component. This gives a fast, no-build preview loop.
+
+  Step 1 — Create a new file in ui/docs/:
+    ui/docs/<screen-name>.html
+
+  Step 2 — Use this starter template:
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-sky-100 min-h-screen">
+      <!-- screen mockup here -->
+    </body>
+    </html>
+
+  Step 3 — Open in a browser to iterate on the layout.
+    No server, no build, no install — just open the file.
+
+  Step 4 — When you are satisfied with the layout, translate it to an
+    Expo screen using the corresponding Tailwind class names.
+    The NativeWind class names in the Expo screen should match the
+    Tailwind class names used in the HTML mockup.
+
+  Step 5 — Commit the HTML file alongside the Expo screen changes.
+
+------------------------------------------------------------------------
+What belongs in ui/docs/ vs elsewhere
+------------------------------------------------------------------------
+
+  ui/docs/           Design docs, HTML mockups, screenshots, wireframes
+                     (tracked in git)
+
+  docs/pdfs/         Auto-generated project architecture PDFs
+                     (gitignored — run lib/generate_pdf.py to regenerate)
+
+  ui/                Expo source code only — no design files at the root

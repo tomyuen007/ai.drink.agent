@@ -86,7 +86,7 @@ wine.liquor/
 - `llm/gpu/` — GPU-specific LLM code only (CUDA, ROCm, quantized models requiring a GPU)
 - `llm/nogpu/` — CPU-only LLM code only (Ollama, llama.cpp, models that run without a GPU)
 - `ui/` is **Expo (React Native) only** — all frontend code uses Expo; no plain HTML/CSS/JS
-- `ui/docs/` — all UI design documents and page renders go here (Word docs, HTML mockups, screenshots, wireframes). Never put these files in the `ui/` root.
+- `ui/docs/` — **only** place for UI page renders, screenshots, intermediate files, and design docs. The `ui/` root is Expo source code only — no images, no HTML mockups, no Word docs at the root.
 - All shell scripts go in `scripts/`
 - All downloaded sample data goes in `samples/`
 - All generated PDFs go in `docs/pdfs/` (gitignored)
@@ -155,23 +155,46 @@ npx expo install expo-sqlite @react-native-async-storage/async-storage
 
 ## UI Design Docs — `ui/docs/`
 
-**Decision (2026-05-24):** All UI design documents and page renders live in `ui/docs/`. This folder is tracked in git. Never place design files loose in the `ui/` root.
+**Decision (2026-05-24):** `ui/docs/` is the **only** place for UI page renders, screenshots, intermediate files, and design documents. The `ui/` root is for Expo source code only. This rule applies to all current and future work on the UI.
+
+### The rule
+
+> **All non-source UI files go in `ui/docs/` — no exceptions.**
+>
+> - Page renders (HTML mockups)
+> - Screenshots and device previews (JPG, PNG)
+> - Design documents (Word, PDF, Figma exports)
+> - Any intermediate file produced while designing a screen
+
+Never place these files loose in `ui/`. If you are unsure whether a file belongs in `ui/docs/`, it does.
 
 ### What goes in `ui/docs/`
 
 | File type | Examples |
 |-----------|----------|
 | Word / design documents | `ui.docx` |
-| Static HTML mockups / page renders | `_preview.html` |
-| Screenshots and wireframes | `*.png`, `*.jpg` |
-| Any other UI design artifact | PDFs, Figma exports |
+| Static HTML page renders | `_preview.html`, `<screen>.html` |
+| Device screenshots and previews | `preview_web.jpg`, `preview_ios.jpg` |
+| Wireframes and exported assets | `*.png`, `*.jpg`, `*.pdf` |
+| Any intermediate design artifact | Notes, drafts, exports |
 
 ### Current contents
 
 | File | Description |
 |------|-------------|
 | `ui/docs/ui.docx` | UI design document — screen layouts and component specs |
-| `ui/docs/_preview.html` | Static HTML render of the Weather AI page (Tailwind CDN, no build step) |
+| `ui/docs/_preview.html` | Static HTML render of the Weather AI main screen |
+| `ui/docs/preview_web.jpg` | Web browser screenshot |
+| `ui/docs/preview_ios.jpg` | iOS Simulator screenshot |
+| `ui/docs/preview_android.jpg` | Android Emulator screenshot |
+| `ui/docs/preview_mobile.jpg` | Mobile layout screenshot |
+| `ui/docs/preview_ipad_portrait.jpg` | iPad portrait screenshot |
+| `ui/docs/preview_ipad_landscape.jpg` | iPad landscape screenshot |
+| `ui/docs/preview_history_web.jpg` | History page — web screenshot |
+| `ui/docs/preview_history_ios.jpg` | History page — iOS screenshot |
+| `ui/docs/preview_settings_web.jpg` | Settings page — web screenshot |
+| `ui/docs/preview_settings_ios.jpg` | Settings page — iOS screenshot |
+| `ui/docs/preview_sync_modal.jpg` | Sync States modal screenshot |
 
 ### How to add a new page render
 
@@ -188,9 +211,10 @@ npx expo install expo-sqlite @react-native-async-storage/async-storage
    </body>
    </html>
    ```
-2. Save it as `ui/docs/<page-name>.html`
+2. Save it as `ui/docs/<screen-name>.html`
 3. Open in any browser to preview — no server needed
-4. Commit alongside the corresponding Expo screen changes
+4. Save any screenshots as `ui/docs/preview_<screen>_<platform>.jpg`
+5. Commit everything in `ui/docs/` alongside the Expo screen changes
 
 ---
 

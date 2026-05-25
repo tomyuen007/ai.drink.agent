@@ -1045,6 +1045,7 @@ All scripts live in the ui/ folder and must be made executable before
 first use. Run this once from the ui/ folder:
   chmod +x run-web.sh run-ios.sh run-android.sh
   chmod +x debug-web.sh debug-ios.sh debug-android.sh
+  chmod +x clear-web.sh
 
 ------------------------------------------------------------------------
   Script            Platform   Mode       Description
@@ -1055,6 +1056,7 @@ first use. Run this once from the ui/ folder:
   debug-web.sh      Web        Debug      Start web server for VS Code Chrome debugger
   debug-ios.sh      iOS        Debug      Start iOS server for VS Code Hermes debugger
   debug-android.sh  Android    Debug      Start Android server for VS Code Hermes debugger
+  clear-web.sh      Web        Utility    Erase all settings and history (web only)
 ------------------------------------------------------------------------
 
 Difference between run-* and debug-* scripts:
@@ -1065,7 +1067,53 @@ Difference between run-* and debug-* scripts:
             URL so VS Code can attach reliably. Use these when you need
             to set breakpoints in VS Code.
 
-Environment overrides (prepend to any script or command):
+------------------------------------------------------------------------
+Clearing all web data (clear-web.sh)
+------------------------------------------------------------------------
+
+Use this whenever you need a completely clean slate in the browser —
+e.g., after changing .env defaults, testing first-run flows, or when
+settings are stuck in a broken state.
+
+What it erases (web only):
+  - Settings (theme, font, default page, LLM provider, online mode, etc.)
+  - User account (email, phone)
+  - Weather city, question, and last result
+  - Saved questions list
+  - Complete SQLite activity history
+
+What it does NOT touch:
+  - node_modules, source files, .env, or the Metro bundler cache
+  - iOS / Android on-device storage (this is web-only)
+
+Usage:
+  bash clear-web.sh
+    Starts the Expo web server if it is not running, then opens
+    http://localhost:8081/clear in your browser. The /clear route
+    (app/clear.tsx) wipes AsyncStorage (localStorage) and the SQLite
+    history table, then redirects to / for a fresh start.
+
+  bash clear-web.sh --no-server
+    Opens /clear without starting the server. Use this when the server
+    is already running (e.g., from run-web.sh in another terminal).
+
+How the clear works internally:
+  1. Browser navigates to http://localhost:8081/clear
+  2. app/clear.tsx runs:
+       a. initDb()          — open the SQLite connection
+       b. clearHistory()    — DROP + recreate user_history table (OPFS)
+       c. AsyncStorage.clear() — remove all redux-persist keys (localStorage)
+       d. window.location.href = "/"  — full page reload
+  3. On reload, Redux-persist finds empty storage → all slices reset
+     to their initialState defaults
+  4. The app opens at the login screen as if freshly installed
+
+After clearing, start a normal session:
+  bash run-web.sh
+
+------------------------------------------------------------------------
+Environment overrides (prepend to any script or command)
+------------------------------------------------------------------------
 
   Offline mode:          EXPO_PUBLIC_ONLINE=0 bash run-web.sh
   Force clear cache:     npx expo start --web --clear

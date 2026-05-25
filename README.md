@@ -277,6 +277,48 @@ NativeWind v5 is still at `5.0.0-preview.4` as of 2026-05-24 (stable is 4.2.4). 
 
 ---
 
+## UI Web Data Clear — `ui/clear-web.sh`
+
+**Decision (2026-05-24):** Web-mode settings and history are stored in browser storage (not files), so they cannot be erased from the shell alone. A dedicated `/clear` route in the Expo app wipes both storage systems from within the browser origin, then forces a full reload so Redux re-initialises from blank state.
+
+### What gets cleared
+
+| Storage | Technology | What is stored |
+|---------|-----------|----------------|
+| Redux-persist state | `localStorage` via `AsyncStorage` | Settings (theme, font, LLM provider, etc.), user account, weather city/question/result, saved questions |
+| Activity history | OPFS via `expo-sqlite` WASM | Full SQLite `user_history` table |
+
+### What is NOT cleared
+
+- Native app storage (iOS Keychain, Android SharedPreferences) — `/clear` only runs in the browser
+- Any `.env` file values — those are build-time; restart the server to pick up changes
+
+### Usage
+
+```bash
+# Auto-start server if needed, then open /clear in the browser
+bash ui/clear-web.sh
+
+# Open /clear only — server must already be running
+bash ui/clear-web.sh --no-server
+
+# Start in offline mode before clearing
+EXPO_PUBLIC_ONLINE=0 bash ui/clear-web.sh
+```
+
+### How it works
+
+1. `clear-web.sh` checks whether `localhost:8081` is accepting connections (`nc -z`)
+2. If not, starts `npx expo start --web` in the background and waits up to 120 s
+3. Opens `http://localhost:8081/clear` in the system browser (xdg-open / macOS open / WSL cmd.exe)
+4. `app/clear.tsx` runs: `initDb()` → `clearHistory()` → `AsyncStorage.clear()` → `window.location.href = "/"`
+
+The `initDb()` call is required before `clearHistory()` because `clearHistory()` calls `getDb()` which throws if the database has not been opened yet. `initDb()` is idempotent — it is a no-op if the database is already open.
+
+After `AsyncStorage.clear()`, the Redux store still has the old in-memory state. The `window.location.href = "/"` forces a full page reload, discarding in-memory state. On reload, `PersistGate` finds empty `localStorage` and all slices initialise from their `initialState`.
+
+---
+
 ## Two Distinct Claude Roles
 
 ### Role 1: Data Cleaning Agent

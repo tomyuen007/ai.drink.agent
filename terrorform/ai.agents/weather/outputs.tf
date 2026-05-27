@@ -1,5 +1,5 @@
-resource "aws_lambda_function_url" "agent" {
-  function_name      = module.agent.function_name
+resource "aws_lambda_function_url" "weather_agent" {
+  function_name      = module.weather_agent.function_name
   authorization_type = "NONE"
 
   cors {
@@ -11,5 +11,5 @@ resource "aws_lambda_function_url" "agent" {
 
 output "agent_url" {
   description = "Public HTTPS endpoint for the weather agent — pass to terrorform/ui as agent_url"
-  value       = aws_lambda_function_url.agent.function_url
+  value       = aws_lambda_function_url.weather_agent.function_url
 }

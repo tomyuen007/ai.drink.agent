@@ -1,25 +1,31 @@
 import * as SQLite from "expo-sqlite";
 
 let _db: SQLite.SQLiteDatabase | null = null;
+let _initPromise: Promise<void> | null = null;
 
 export async function initDb(): Promise<void> {
   if (_db) return;
-  const db = await SQLite.openDatabaseAsync("app.db");
-  await db.execAsync("PRAGMA journal_mode = WAL;");
-  // UTF-8 is SQLite's default encoding; this PRAGMA is a no-op on existing DBs
-  // but documents intent for any reader who checks the schema.
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS user_history (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      date_text    TEXT NOT NULL,
-      time_text    TEXT NOT NULL,
-      history_json TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_h_date        ON user_history (date_text);
-    CREATE INDEX IF NOT EXISTS idx_h_time        ON user_history (time_text);
-    CREATE INDEX IF NOT EXISTS idx_h_json_prefix ON user_history (SUBSTR(history_json, 1, 50));
-  `);
-  _db = db;
+  // Return the in-progress promise if a concurrent call is already opening the DB.
+  // Without this, React StrictMode's double-effect invocation races to open the
+  // same OPFS file twice, which throws NoModificationAllowedError.
+  if (_initPromise) return _initPromise;
+  _initPromise = (async () => {
+    const db = await SQLite.openDatabaseAsync("app.db");
+    await db.execAsync("PRAGMA journal_mode = WAL;");
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS user_history (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        date_text    TEXT NOT NULL,
+        time_text    TEXT NOT NULL,
+        history_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_h_date        ON user_history (date_text);
+      CREATE INDEX IF NOT EXISTS idx_h_time        ON user_history (time_text);
+      CREATE INDEX IF NOT EXISTS idx_h_json_prefix ON user_history (SUBSTR(history_json, 1, 50));
+    `);
+    _db = db;
+  })();
+  return _initPromise;
 }
 
 function getDb(): SQLite.SQLiteDatabase {

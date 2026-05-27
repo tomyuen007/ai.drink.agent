@@ -1,6 +1,6 @@
 import "../global.css";
 import React, { useEffect, useRef } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
 import { Slot } from "expo-router";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
@@ -14,12 +14,38 @@ import { initDb } from "../lib/db";
 
 function AppInit() {
   const dispatch  = useAppDispatch();
-  const stateSync = useAppSelector((s) => s.settings.stateSync);
-  const modalRef  = useRef<ISyncStates>(null);
+  const stateSync  = useAppSelector((s) => s.settings.stateSync);
+  const theme      = useAppSelector((s) => s.settings.theme);
+  const online     = useAppSelector((s) => s.settings.online);
+  const historyLog = useAppSelector((s) => s.settings.historyLog);
+  const modalRef   = useRef<ISyncStates>(null);
+
+  // Append online/offline status to browser tab title on web
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    document.title = `Weather AI — ${online ? "Online" : "Offline"}`;
+  }, [online]);
+
+  // Apply dark class to <html> so NativeWind class-mode dark mode works on web
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const html = document.documentElement;
+    if (theme === "dark") { html.classList.add("dark"); return; }
+    if (theme === "light") { html.classList.remove("dark"); return; }
+    // "system" — mirror prefers-color-scheme
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = (e: MediaQueryList | MediaQueryListEvent) => {
+      if (e.matches) html.classList.add("dark");
+      else html.classList.remove("dark");
+    };
+    apply(mq);
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [theme]);
 
   useEffect(() => {
     async function init() {
-      await initDb();
+      if (historyLog === 1) await initDb();
       if (!stateSync) return;
       if (isEnvStateAvailable()) {
         syncStateFromEnv(dispatch);
@@ -29,7 +55,7 @@ function AppInit() {
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [historyLog]);
 
   return (
     <SyncStatesModal

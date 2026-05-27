@@ -1,5 +1,5 @@
 locals {
-  root = abspath("${path.module}/../..")
+  root = abspath("${path.module}/../../..")
 
   # Parse .env into a map — skip blank lines and comments
   _raw_lines = split("\n", file("${local.root}/.env"))
@@ -23,12 +23,12 @@ data "terraform_remote_state" "layers" {
   }
 }
 
-module "agent" {
-  source = "../modules/lambda_function"
+module "weather_agent" {
+  source = "../../../modules/lambda_function"
 
-  name       = "wine-liquor-agent"
-  source_dir = "${local.root}/server"
-  handler    = "weather_agent.handler"
+  name       = "wine-liquor-weather-agent"
+  source_dir = "${local.root}/ai.agents/weather"
+  handler    = "agent.handler"
   arch       = var.lambda_arch
   runtime    = var.python_version
   timeout    = 60

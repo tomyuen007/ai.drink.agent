@@ -18,13 +18,15 @@ interface SettingsState {
   fontSize:      FontSizeScale;
   fontWeight:    FontWeightSetting;
   fontStyle:     FontStyleSetting;
+  historyLog:    0 | 1;
 }
 
 const settingsSlice = createSlice({
   name: "settings",
   initialState: {
-    online:        (process.env.EXPO_PUBLIC_ONLINE      ?? "1") !== "0",
-    stateSync:     (process.env.EXPO_PUBLIC_STATE_SYNC  ?? "1") !== "0",
+    online:        (process.env.EXPO_PUBLIC_ONLINE       ?? "1") !== "0",
+    stateSync:     (process.env.EXPO_PUBLIC_STATE_SYNC   ?? "1") !== "0",
+    historyLog:    (process.env.EXPO_PUBLIC_HISTORY_LOG  ?? "0") === "1" ? 1 : 0,
     llmProvider:   "env-default",
     theme:         "system",
     notifications: true,
@@ -41,6 +43,9 @@ const settingsSlice = createSlice({
     },
     setStateSync(state, action: PayloadAction<boolean>) {
       state.stateSync = action.payload;
+    },
+    setHistoryLog(state, action: PayloadAction<0 | 1>) {
+      state.historyLog = action.payload;
     },
     setLlmProvider(state, action: PayloadAction<LLMProvider>) {
       state.llmProvider = action.payload;
@@ -79,14 +84,15 @@ const settingsSlice = createSlice({
       state.fontSize      = "medium";
       state.fontWeight    = "regular";
       state.fontStyle     = "normal";
-      state.online        = (process.env.EXPO_PUBLIC_ONLINE     ?? "1") !== "0";
-      state.stateSync     = (process.env.EXPO_PUBLIC_STATE_SYNC ?? "1") !== "0";
+      state.online        = (process.env.EXPO_PUBLIC_ONLINE      ?? "1") !== "0";
+      state.stateSync     = (process.env.EXPO_PUBLIC_STATE_SYNC  ?? "1") !== "0";
+      state.historyLog    = (process.env.EXPO_PUBLIC_HISTORY_LOG ?? "0") === "1" ? 1 : 0;
     },
   },
 });
 
 export const {
-  setOnline, setStateSync, setLlmProvider,
+  setOnline, setStateSync, setHistoryLog, setLlmProvider,
   setTheme, setNotifications, setDefaultCity, setDefaultPage,
   setFontFamily, setFontSize, setFontWeight, setFontStyle,
   resetSettings,

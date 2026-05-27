@@ -3,7 +3,7 @@ import { insertHistory } from "./db";
 import { setUser, clearUser } from "../store/slices/userSlice";
 import {
   setTheme, setNotifications, setDefaultCity, setDefaultPage,
-  setOnline, setStateSync, setLlmProvider, resetSettings,
+  setOnline, setStateSync, setHistoryLog, setLlmProvider, resetSettings,
   setFontFamily, setFontSize, setFontWeight, setFontStyle,
 } from "../store/slices/settingsSlice";
 import { setCity, setQuestion, clearWeather } from "../store/slices/weatherSlice";
@@ -19,6 +19,7 @@ export interface SyncPayload {
   settings?:  Partial<{
     online:        boolean;
     stateSync:     boolean;
+    historyLog:    0 | 1;
     llmProvider:   LLMProvider;
     theme:         ISettings["theme"];
     notifications: boolean;
@@ -54,6 +55,7 @@ export function applyPayload(dispatch: AppDispatch, payload: SyncPayload): void 
   if (settings) {
     if (settings.online        !== undefined) dispatch(setOnline(settings.online));
     if (settings.stateSync     !== undefined) dispatch(setStateSync(settings.stateSync));
+    if (settings.historyLog    !== undefined) dispatch(setHistoryLog(settings.historyLog));
     if (settings.llmProvider   !== undefined) dispatch(setLlmProvider(settings.llmProvider));
     if (settings.theme         !== undefined) dispatch(setTheme(settings.theme));
     if (settings.notifications !== undefined) dispatch(setNotifications(settings.notifications));

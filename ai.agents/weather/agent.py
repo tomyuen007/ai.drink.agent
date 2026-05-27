@@ -13,15 +13,15 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from pydantic import BaseModel
 
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT / "rag"))
-from retriever import retrieve  # noqa: E402
+ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(ROOT / "rags" / "weather"))
+from rag import retrieve  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
 # Default provider read from server .env (used when the app sends no override).
 PROVIDER   = os.getenv("LLM_PROVIDER", "claude").lower()
-MCP_SERVER = str(ROOT / "mcp" / "weather_server.py")
+MCP_SERVER = str(ROOT / "mcps" / "weather" / "mcp.py")
 
 _OPENAI_SDK_PROVIDERS = {"openai", "groq", "ollama", "openai-compat"}
 _VALID_PROVIDERS      = {"claude", "gemini", "bedrock"} | _OPENAI_SDK_PROVIDERS
@@ -341,4 +341,4 @@ async def ask(req: AskRequest):
 
 if __name__ == "__main__":
     port = int(os.getenv("AGENT_PORT", 8001))
-    uvicorn.run("weather_agent:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("agent:app", host="0.0.0.0", port=port, reload=True)

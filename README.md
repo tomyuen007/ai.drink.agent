@@ -499,6 +499,10 @@ curl http://localhost:11434/api/tags
 - **Project code** → reads `ANTHROPIC_API_KEY` from `.env` (prepaid API credits)
 - `ANTHROPIC_API_KEY` is **not** set as a system environment variable — only in `.env` — so the CLI never accidentally burns API credits
 
+### ANTHROPIC_API_KEY usage rule
+
+`ANTHROPIC_API_KEY` is used **exclusively** when `LLM_PROVIDER=claude`. It must not be passed to, reused by, or shared with any other provider (OpenAI, Groq, Gemini, Bedrock, Ollama, or openai-compat). Each provider authenticates with its own dedicated key (`OPENAI_API_KEY`, `GROQ_API_KEY`, `GOOGLE_API_KEY`, etc.). This rule is enforced by the `.env` comment and `ai.agents/weather/agent.py`, which only reads `ANTHROPIC_API_KEY` inside the `claude` provider branch.
+
 ---
 
 ## Database Init — How Automatic Connection Works

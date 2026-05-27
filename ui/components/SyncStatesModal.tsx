@@ -12,7 +12,7 @@ const PLACEHOLDER = JSON.stringify(
   {
     user:      { email: "", phone: "" },
     settings:  {
-      online: true, stateSync: true, llmProvider: "env-default",
+      online: true, stateSync: true, historyLog: 0, llmProvider: "env-default",
       theme: "system", notifications: true,
       defaultCity: "", defaultPage: "home",
       fontFamily: "system", fontSize: "medium",

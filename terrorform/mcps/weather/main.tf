@@ -1,5 +1,5 @@
 locals {
-  root = abspath("${path.module}/../..")
+  root = abspath("${path.module}/../../..")
 }
 
 data "terraform_remote_state" "layers" {
@@ -11,12 +11,12 @@ data "terraform_remote_state" "layers" {
   }
 }
 
-module "mcp" {
-  source = "../modules/lambda_function"
+module "weather_mcp" {
+  source = "../../../modules/lambda_function"
 
-  name       = "wine-liquor-mcp"
-  source_dir = "${local.root}/mcp"
-  handler    = "weather_server.handler"
+  name       = "wine-liquor-weather-mcp"
+  source_dir = "${local.root}/mcps/weather"
+  handler    = "mcp.handler"
   arch       = var.lambda_arch
   runtime    = var.python_version
   timeout    = 30

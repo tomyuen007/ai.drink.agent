@@ -11,6 +11,7 @@ const TRACKED = new Set([
   "settings/setLlmProvider",
   "settings/setOnline",
   "settings/setStateSync",
+  "settings/setHistoryLog",
   "settings/setTheme",
   "settings/setNotifications",
   "settings/setDefaultPage",
@@ -63,12 +64,17 @@ function buildEntry(type: string, payload: unknown): HistoryEntry {
   }
 }
 
-export const historyMiddleware: Middleware = () => (next) => (action) => {
+export const historyMiddleware: Middleware = (store) => (next) => (action) => {
   const result = next(action);
   const a = action as { type: string; payload?: unknown };
   if (TRACKED.has(a.type)) {
     const entry = buildEntry(a.type, a.payload);
-    insertHistory(entry as Record<string, unknown>);
+    const historyLog = (store.getState() as { settings: { historyLog: 0 | 1 } }).settings.historyLog;
+    if (historyLog === 1) {
+      insertHistory(entry as Record<string, unknown>);
+    } else {
+      console.log("[history]", entry);
+    }
   }
   return result;
 };

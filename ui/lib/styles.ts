@@ -123,6 +123,25 @@ export const S = {
   settingsLabel:         "text-[15px] text-gray-800 font-medium flex-1",
   settingsHint:          "text-[12px] text-slate-400 mt-0.5",
 
+  // ── Chatbot (Home page) ───────────────────────────────────────────────────
+  chatContainer:    "flex-1 bg-sky-50",
+  chatMessages:     "flex-1",
+  chatMsgList:      "px-4 pt-4 pb-2",
+  chatBubbleUser:   "self-end bg-sky-500 rounded-2xl rounded-tr-sm px-4 py-3 mb-3 max-w-[80%]",
+  chatBubbleBot:    "self-start bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 mb-3 max-w-[80%] shadow-sm",
+  chatBubbleErr:    "self-start bg-red-50 border border-red-200 rounded-2xl rounded-tl-sm px-4 py-3 mb-3 max-w-[80%]",
+  chatTextUser:     "text-white text-[15px] leading-relaxed",
+  chatTextBot:      "text-gray-900 text-[15px] leading-relaxed",
+  chatTextErr:      "text-red-700 text-[15px] leading-relaxed",
+  chatInputRow:     "flex-row items-end px-3 py-3 bg-white border-t border-gray-200",
+  chatInput: isWeb
+    ? "flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-[15px] text-gray-900 mr-2 max-h-32 focus:outline-none"
+    : "flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-[15px] text-gray-900 mr-2 max-h-32",
+  chatSend: isWeb
+    ? "w-11 h-11 bg-sky-500 rounded-full items-center justify-center hover:bg-sky-600 cursor-pointer"
+    : "w-11 h-11 bg-sky-500 rounded-full items-center justify-center",
+  chatSendDisabled: "w-11 h-11 bg-gray-300 rounded-full items-center justify-center",
+
   // ── Auth pages (Login / Sign-up / Logout) ────────────────────────────────
   authBody:     "flex-1 items-center justify-center px-6 py-10 bg-sky-100",
   authCard:     "w-full max-w-sm bg-white rounded-2xl p-7 shadow-md",

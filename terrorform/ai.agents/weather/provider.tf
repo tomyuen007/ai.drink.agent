@@ -4,7 +4,7 @@ terraform {
   }
   backend "s3" {
     bucket = "wine-liquor-tf-state"
-    key    = "agent/terraform.tfstate"   # ← own state, independent of other apps
+    key    = "ai-agents/weather/terraform.tfstate"
     region = "us-east-1"
   }
 }

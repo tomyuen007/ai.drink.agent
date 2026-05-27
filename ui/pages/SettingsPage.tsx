@@ -7,7 +7,7 @@ import Menu from "../components/Menu";
 import AppText from "../components/AppText";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
-  setOnline, setStateSync, setLlmProvider,
+  setOnline, setStateSync, setHistoryLog, setLlmProvider,
   setDefaultCity, setDefaultPage, setNotifications, setTheme,
   setFontFamily, setFontSize, setFontWeight, setFontStyle,
 } from "../store/slices/settingsSlice";
@@ -30,6 +30,7 @@ export default function SettingsPage() {
   const notifications = useAppSelector((s) => s.settings.notifications);
   const defaultCity   = useAppSelector((s) => s.settings.defaultCity);
   const defaultPage   = useAppSelector((s) => s.settings.defaultPage);
+  const historyLog    = useAppSelector((s) => s.settings.historyLog);
   const llmProvider   = useAppSelector((s) => s.settings.llmProvider as LLMProvider);
   const fontFamily    = useAppSelector((s) => s.settings.fontFamily as FontFamily);
   const fontSize      = useAppSelector((s) => s.settings.fontSize   as FontSizeScale);
@@ -45,6 +46,21 @@ export default function SettingsPage() {
 
   const envAvailable  = isEnvStateAvailable();
   const pasteModalRef = useRef<ISyncStates>(null);
+
+  function onEnableHistoryLog() {
+    const msg =
+      "SQLite history logging uses OPFS, which only allows one browser tab at a time. " +
+      "Opening the app in a second tab while this is enabled will crash with an OPFS error.\n\n" +
+      "Enable SQLite history logging?";
+    if (Platform.OS === "web") {
+      if (window.confirm(msg)) dispatch(setHistoryLog(1));
+    } else {
+      Alert.alert("One Tab Only", msg, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Enable", onPress: () => dispatch(setHistoryLog(1)) },
+      ]);
+    }
+  }
 
   function hasExistingData(): boolean {
     return !!(userEmail || userPhone || savedQuestions.length > 0 || weatherCity);
@@ -128,7 +144,31 @@ export default function SettingsPage() {
           </View>
         </View>
 
-        {/* 3 ── Language Model ────────────────────────────────────────────── */}
+        {/* 3 ── History Logging ───────────────────────────────────────────── */}
+        <View className={S.settingsSection}>
+          <AppText className={S.settingsSectionTitle}>History Logging</AppText>
+
+          <View className={S.settingsRowLast}>
+            <View className="flex-1">
+              <AppText className={S.settingsLabel}>
+                {historyLog === 1 ? "SQLite  (HISTORY_LOG=1)" : "Console  (HISTORY_LOG=0)"}
+              </AppText>
+              <AppText className={S.settingsHint}>
+                {historyLog === 1
+                  ? "Activity saved to SQLite/OPFS — one browser tab only"
+                  : "Activity logged to the browser console only"}
+              </AppText>
+            </View>
+            <Switch
+              value={historyLog === 1}
+              onValueChange={(v) => v ? onEnableHistoryLog() : dispatch(setHistoryLog(0))}
+              trackColor={{ false: "#D1D5DB", true: "#38BDF8" }}
+              thumbColor="#fff"
+            />
+          </View>
+        </View>
+
+        {/* 4 ── Language Model ────────────────────────────────────────────── */}
         <View className={S.settingsSection}>
           <AppText className={S.settingsSectionTitle}>Language Model</AppText>
 

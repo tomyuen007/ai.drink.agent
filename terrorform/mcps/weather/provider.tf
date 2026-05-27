@@ -4,7 +4,7 @@ terraform {
   }
   backend "s3" {
     bucket = "wine-liquor-tf-state"
-    key    = "mcp/terraform.tfstate"
+    key    = "mcps/weather/terraform.tfstate"
     region = "us-east-1"
   }
 }

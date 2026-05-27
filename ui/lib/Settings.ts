@@ -20,6 +20,7 @@ export interface ISettings extends IComponentBase {
   fontSize:      FontSizeScale;
   fontWeight:    FontWeightSetting;
   fontStyle:     FontStyleSetting;
+  historyLog:    0 | 1;
 }
 
 export class Settings extends ComponentBase implements ISettings {
@@ -37,5 +38,6 @@ export class Settings extends ComponentBase implements ISettings {
     public fontSize:           FontSizeScale               = "medium",
     public fontWeight:         FontWeightSetting           = "regular",
     public fontStyle:          FontStyleSetting            = "normal",
+    public historyLog:         0 | 1                       = 0,
   ) { super(id, tag); }
 }

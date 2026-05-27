@@ -14,10 +14,10 @@ module "deps_layer" {
   runtime       = var.python_version
 
   requirements_files = [
-    "server/requirements.txt",
+    "ai.agents/weather/requirements.txt",
     "duckdb/requirements.txt",
-    "rag/requirements.txt",
-    "mcp/requirements.txt",
+    "rags/weather/requirements.txt",
+    "mcps/weather/requirements.txt",
   ]
 }
 

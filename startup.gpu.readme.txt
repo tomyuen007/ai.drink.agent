@@ -1,0 +1,424 @@
+================================================================================
+  Weather AI — System Startup Guide
+  Python 3.12  |  Expo SDK 56  |  React Native 0.85  |  NativeWind 4
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+  1.  Prerequisites
+  2.  One-Time Setup
+       2a. Python — Single venv for all backend components
+       2b. Expo — UI install
+  3.  Required .env Values
+  4.  Starting the System (daily workflow)
+  5.  Python Debugging
+       5a. VS Code launch config
+       5b. Step-by-step
+       5c. Tips
+  6.  Expo Debugging
+       6a. Web
+       6b. iOS
+       6c. Android
+  7.  Health Check
+  8.  Stopping the System
+  9.  Troubleshooting
+
+
+================================================================================
+1. PREREQUISITES
+================================================================================
+
+Python
+  - Python 3.12 or newer
+      python3 --version     # must print 3.12.x or higher
+  - pip 23 or newer
+      pip --version
+
+Node / Expo
+  - Node.js 18 or newer
+      node --version        # must print v18.x.x or higher
+  - npm 10 or newer (bundled with Node)
+      npm --version
+
+VS Code (optional — only needed for debugging)
+  - VS Code 1.85 or newer
+  - Extensions:
+      ms-python.python                  Python debugger
+      expo.vscode-expo-tools            Expo IntelliSense + launch.json support
+      msjsdiag.vscode-react-native      iOS / Android Hermes debugger
+      ms-vscode.js-debug-nightly        Better source maps for web (recommended)
+
+
+================================================================================
+2. ONE-TIME SETUP
+================================================================================
+
+------------------------------------------------------------------------
+2a. Python — Single venv for all backend components
+------------------------------------------------------------------------
+
+WHY one venv:
+  rags/weather/rag.py  is imported directly into the agent process.
+  mcps/weather/mcp.py  is spawned by the agent using sys.executable.
+  Both must use the same Python interpreter and installed packages.
+  Separate venvs cannot be used.
+
+  Step 1 — Navigate to the project root:
+    cd /path/to/wine.liquor
+
+  Step 2 — Create the venv (once only):
+    python3 -m venv venv
+
+  Step 3 — Activate the venv:
+    source venv/bin/activate              # macOS / Linux / WSL
+    venv\Scripts\activate                 # Windows cmd
+    venv\Scripts\Activate.ps1            # Windows PowerShell
+
+    Your prompt changes to show (venv) when active.
+    All pip install and python commands now use the venv.
+
+  Step 4 — Install PyTorch with CUDA support FIRST (important — before anything else):
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+    WHY: rags/ uses sentence-transformers which depends on PyTorch.
+    Installing the CUDA build first (~2 GB) pins torch before
+    sentence-transformers can pull a different version.
+    CUDA 12.1 is used above. Check your driver version first:
+      nvidia-smi                 # shows CUDA version in top-right corner
+    If your GPU uses CUDA 11.8, replace cu121 with cu118:
+      pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    For CPU-only machines (no GPU), use startup.nogpu.readme.txt instead.
+
+  Step 5 — Install all backend dependencies:
+    pip install -r ai.agents/weather/requirements.txt
+    pip install -r rags/weather/requirements.txt
+    pip install -r mcps/weather/requirements.txt
+
+    Note: rags/ installs sentence-transformers (all-MiniLM-L6-v2).
+    First use downloads the model weights (~90 MB). Subsequent runs
+    use the local cache — no re-download needed.
+
+  Step 6 — Verify the install:
+    python -c "import fastapi, anthropic, chromadb, mcp; print('OK')"
+    # Expected output: OK
+
+
+------------------------------------------------------------------------
+2b. Expo — UI install
+------------------------------------------------------------------------
+
+  Step 1 — Navigate to the ui/ folder:
+    cd /path/to/wine.liquor/ui
+
+  Step 2 — Install all Node packages (once only):
+    npm install
+
+  Step 3 — Verify:
+    npx expo --version      # prints the Expo CLI version
+
+  Full Expo setup details (iOS Simulator, Android Emulator, extensions):
+    See ui/README.txt
+
+
+================================================================================
+3. REQUIRED .env VALUES
+================================================================================
+
+The root .env file must have these set before starting the system:
+
+  ANTHROPIC_API_KEY=sk-ant-...      # required when LLM_PROVIDER=claude
+                                    # used ONLY for Anthropic API — do not
+                                    # share with other providers
+  LLM_PROVIDER=claude               # active provider
+  AGENT_PORT=8001                   # agent server port
+  EXPO_PUBLIC_AGENT_URL=http://localhost:8001   # UI → agent URL
+
+The .env is gitignored. Never commit it.
+See README.md "ANTHROPIC_API_KEY usage rule" for the key isolation policy.
+
+
+================================================================================
+4. STARTING THE SYSTEM  (daily workflow)
+================================================================================
+
+Open TWO terminals.
+
+------------------------------------------------------------------------
+Terminal 1 — Python agent
+------------------------------------------------------------------------
+
+  cd /path/to/wine.liquor
+  source venv/bin/activate              # activate venv each session
+  python ai.agents/weather/agent.py     # starts on port 8001
+
+  Expected output:
+    INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+    INFO:     Application startup complete.
+
+  What happens automatically:
+    - rags/weather/rag.py  is imported — ChromaDB + sentence-transformer
+      model load into memory (~3-5 s on first call)
+    - mcps/weather/mcp.py  is spawned per-request via sys.executable
+      using this same venv — no separate start needed
+
+------------------------------------------------------------------------
+Terminal 2 — Expo UI
+------------------------------------------------------------------------
+
+  cd /path/to/wine.liquor/ui
+  npx expo start --web              # opens in browser at http://localhost:8081
+
+  First run or after package changes:
+    npx expo start --web --clear    # clears Metro bundler cache
+
+  Wait for:
+    Web is waiting on http://localhost:8081
+  Then the browser opens automatically.
+
+
+================================================================================
+5. PYTHON DEBUGGING
+================================================================================
+
+------------------------------------------------------------------------
+5a. VS Code launch config
+------------------------------------------------------------------------
+
+Add this to .vscode/launch.json in the project root
+(or use the existing ui/.vscode/launch.json if opening ui/ in VS Code):
+
+  {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug: Weather Agent",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/ai.agents/weather/agent.py",
+        "python": "${workspaceFolder}/venv/bin/python",
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}"
+        },
+        "envFile": "${workspaceFolder}/.env",
+        "console": "integratedTerminal",
+        "justMyCode": false
+      }
+    ]
+  }
+
+  Note: set "justMyCode": false to step into fastapi, mcp, and
+  anthropic library code. Set to true to stay in your own code only.
+
+
+------------------------------------------------------------------------
+5b. Step-by-step debugging
+------------------------------------------------------------------------
+
+  Step 1 — Open VS Code at the project root:
+    code /path/to/wine.liquor
+
+  Step 2 — Ensure the venv is NOT already running agent.py
+    (the debug launch config starts it — two processes on the same port
+    will cause an "address already in use" error).
+
+  Step 3 — Set a breakpoint:
+    Open ai.agents/weather/agent.py.
+    Click in the gutter next to any line — a red dot appears.
+    Good places to break:
+      - Line inside _run_agent()       — before RAG + MCP calls
+      - Line inside _run_claude()      — before/after each API call
+      - Line inside ask()              — on each incoming HTTP request
+
+  Step 4 — Open Run & Debug:
+    Press Ctrl+Shift+D
+    OR click the bug+play icon in the Activity Bar.
+
+  Step 5 — Select the config and start:
+    Choose "Debug: Weather Agent" from the dropdown.
+    Press F5.
+    The integrated terminal shows uvicorn starting.
+    The status bar turns orange — debugger is attached.
+
+  Step 6 — Trigger the breakpoint:
+    In the browser, navigate to the Weather AI page and ask a question.
+    VS Code pauses at the breakpoint and highlights the line in yellow.
+
+  Step 7 — Inspect state:
+    Variables panel  — local and global variables at the paused frame
+    Call Stack panel — full call chain from request handler inward
+    Watch panel      — add expressions: e.g. city, question, rag_chunks
+    Debug console    — evaluate Python expressions: type city + Enter
+
+  Step 8 — Step through code:
+    F5            Continue — run to next breakpoint
+    F10           Step Over — run current line, stay in this function
+    F11           Step Into — enter the called function
+    Shift+F11     Step Out  — finish current function, pause on return
+
+  Step 9 — Stop:
+    Press Shift+F5  OR  click the red square in the debug toolbar.
+
+
+------------------------------------------------------------------------
+5c. Tips
+------------------------------------------------------------------------
+
+  Conditional breakpoints:
+    Right-click a breakpoint dot → "Edit Breakpoint"
+    Enter a condition: e.g.  city == "Tokyo"
+    The debugger only pauses when the condition is true.
+
+  Log points (no code change needed):
+    Right-click gutter → "Add Logpoint"
+    Enter a message: e.g.  RAG returned {len(rag_chunks)} chunks
+    Prints to the debug console without pausing execution.
+
+  Inspecting async code:
+    agent.py is fully async (FastAPI + asyncio).
+    F11 Step Into works across await boundaries.
+    The Call Stack panel shows coroutine frames — look for lines
+    marked with (asyncio) to identify the event loop context.
+
+  Viewing MCP subprocess output:
+    mcp.py runs as a subprocess. Its stdout/stderr appears in the
+    integrated terminal, not in the VS Code debug console.
+    Add print() statements to mcp.py if you need to trace it.
+    For full debugging of mcp.py, set a breakpoint in agent.py just
+    before session.call_tool() and inspect the arguments there.
+
+
+================================================================================
+6. EXPO DEBUGGING
+================================================================================
+
+Full step-by-step instructions for web, iOS, and Android debugging
+are in ui/README.txt Section 5. Summary below.
+
+------------------------------------------------------------------------
+6a. Web debugging (most common — works on any OS)
+------------------------------------------------------------------------
+
+  Step 1 — Start the web dev server in debug mode:
+    cd ui/
+    bash debug-web.sh
+    Wait for: "Web is waiting on http://localhost:8081"
+
+  Step 2 — In VS Code (opened at ui/):
+    Ctrl+Shift+D → select "Debug: Web — Launch Chrome" → F5
+    Chrome opens, VS Code status bar turns orange.
+
+  Step 3 — Set breakpoints in any .tsx / .ts file.
+    Click the gutter next to a line number.
+    Interact with the app — VS Code pauses at the breakpoint.
+
+  Useful variant — attach to existing Chrome:
+    google-chrome --remote-debugging-port=9222
+    Select "Debug: Web — Attach Chrome" → F5
+
+
+------------------------------------------------------------------------
+6b. iOS debugging (macOS only)
+------------------------------------------------------------------------
+
+  Step 1 — Start iOS dev server:
+    cd ui/
+    bash debug-ios.sh
+    Wait for the iOS Simulator to open and show the home screen.
+
+  Step 2 — In VS Code (opened at ui/):
+    Ctrl+Shift+D → select "Debug: iOS — Hermes" → F5
+    Wait for "Hermes runtime ready." Status bar turns orange.
+
+  If debugger stays on "Connecting...":
+    Simulator → Cmd+Ctrl+Z → "Open JS Debugger" → retry F5
+
+
+------------------------------------------------------------------------
+6c. Android debugging
+------------------------------------------------------------------------
+
+  Step 1 — Start Android Emulator first:
+    emulator -avd Pixel_8_API_34 &
+    Wait for: adb devices → "emulator-5554   device"
+
+  Step 2 — Start Android dev server:
+    cd ui/
+    bash debug-android.sh
+    Wait for the app to appear on the emulator home screen.
+
+  Step 3 — In VS Code (opened at ui/):
+    Ctrl+Shift+D → select "Debug: Android — Hermes" → F5
+    Wait for "Hermes runtime ready." Status bar turns orange.
+
+  If debugger stays on "Connecting...":
+    Emulator → Ctrl+M → "Open JS Debugger" → retry F5
+    OR: adb shell input keyevent 82
+
+
+================================================================================
+7. HEALTH CHECK
+================================================================================
+
+Verify the Python agent is running:
+
+  curl http://localhost:8001/health
+
+  Expected response:
+    {"status":"ok","default_provider":"claude","model":"claude-sonnet-4-6"}
+
+Verify the UI can reach the agent:
+  Open the app in the browser.
+  Navigate to Weather AI.
+  Ask any question — if the agent is reachable a real answer appears.
+  If not, an error bubble shows the exact failure message.
+
+
+================================================================================
+8. STOPPING THE SYSTEM
+================================================================================
+
+  Terminal 1 (agent):  Ctrl+C
+  Terminal 2 (UI):     Ctrl+C
+
+  Deactivate the venv when done:
+    deactivate
+
+
+================================================================================
+9. TROUBLESHOOTING
+================================================================================
+
+"address already in use" on port 8001
+  Another process is holding port 8001.
+    lsof -i :8001 | grep LISTEN
+    kill -9 <PID>
+  Then restart agent.py.
+
+"ModuleNotFoundError" when starting agent.py
+  The venv is not activated, or a package was not installed.
+    source venv/bin/activate
+    pip install -r ai.agents/weather/requirements.txt
+    pip install -r rags/weather/requirements.txt
+    pip install -r mcps/weather/requirements.txt
+
+RAG model slow on first request
+  all-MiniLM-L6-v2 loads into memory on the first question.
+  Subsequent requests are fast. This is normal — not a bug.
+
+"Could not reach agent at http://localhost:8001"
+  The Python agent is not running.
+  Start Terminal 1 first, confirm the health check passes,
+  then interact with the UI.
+
+Metro bundler stale module / "Unable to resolve module"
+  npx expo start --web --clear
+
+Port 8081 already in use
+  lsof -i :8081 | grep LISTEN
+  kill -9 <PID>
+  OR: npx expo start --web --port 8082
+
+For full Expo troubleshooting:
+  See ui/README.txt Section 9.

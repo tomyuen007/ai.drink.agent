@@ -505,6 +505,51 @@ curl http://localhost:11434/api/tags
 
 ---
 
+## System Startup Guides
+
+**Decision (2026-05-27):** All startup and debug procedures for this project are documented exclusively in the four files below. Use the correct file for your machine and intent. Do not add startup instructions anywhere else in the project.
+
+| File | When to use |
+|------|-------------|
+| `startup.gpu.readme.txt` | **Run** on a machine with a CUDA-capable GPU |
+| `startup.nogpu.readme.txt` | **Run** on a CPU-only machine (WSL, laptop, VM, CI) |
+| `startup.gpu.debug.readme.txt` | **Debug** (VS Code breakpoints) on a machine with a CUDA-capable GPU |
+| `startup.nogpu.debug.readme.txt` | **Debug** (VS Code breakpoints) on a CPU-only machine |
+
+The run guides cover: one-time venv setup, Expo UI install, required `.env` values, daily terminal-based startup, Python debugging summary, Expo debugging summary, health check, and troubleshooting.
+
+The debug guides cover: same setup, then VS Code compound launch (Python + Chrome in one F5), individual Python-only and Web-only debug sessions, detailed breakpoints / stepping / state inspection for both Python and TypeScript, and debug-specific troubleshooting.
+
+The key difference between GPU and CPU variants is Step 4 of the venv setup:
+
+| File | PyTorch install command |
+|------|------------------------|
+| `startup.gpu.readme.txt` | `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
+| `startup.nogpu.readme.txt` | `pip install torch --index-url https://download.pytorch.org/whl/cpu` |
+
+This step must be run **before** `pip install -r rags/weather/requirements.txt` to prevent pip from pulling the wrong build.
+
+### Startup scripts
+
+Two shell scripts automate the full setup and startup sequence. Run from the project root:
+
+| Script | When to use |
+|--------|-------------|
+| `bash scripts/start.weather.nogpu.sh` | CPU-only machine (WSL, laptop, VM, CI) |
+| `bash scripts/start.weather.gpu.sh` | Machine with NVIDIA GPU + CUDA |
+
+Both scripts handle everything end-to-end: create the venv if missing, install the correct PyTorch build, install all Python and Node packages, start the agent on port 8001, wait for it to be healthy, then launch Expo on port 8081. Ctrl+C stops both processes.
+
+```bash
+# First-time setup only (no servers started):
+bash scripts/start.weather.nogpu.sh --setup-only
+
+# Daily startup:
+bash scripts/start.weather.nogpu.sh
+```
+
+---
+
 ## Database Init — How Automatic Connection Works
 
 Each database image handles connection automatically before running init scripts in `/docker-entrypoint-initdb.d/`:

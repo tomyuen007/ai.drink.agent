@@ -1,0 +1,546 @@
+================================================================================
+  Weather AI — Debug Guide  (GPU / CUDA)
+  Python 3.12  |  Expo SDK 56  |  React Native 0.85  |  NativeWind 4
+================================================================================
+
+  This guide is for debugging on machines WITH a CUDA-capable GPU.
+  For CPU-only machines use startup.nogpu.debug.readme.txt.
+  For running without a debugger use startup.gpu.readme.txt.
+
+
+TABLE OF CONTENTS
+-----------------
+  1.  Prerequisites  (VS Code required)
+  2.  One-Time Setup
+       2a. Python — Single venv for all backend components
+       2b. Expo — UI install
+       2c. VS Code extensions
+  3.  Required .env Values
+  4.  Starting the System in Debug Mode
+       4a. Compound session — Python + Web together  (recommended)
+       4b. Python agent only
+       4c. Web UI only
+  5.  Python Debugging
+       5a. Breakpoints
+       5b. Stepping through code
+       5c. Inspecting state
+       5d. Tips
+  6.  Web (Expo) Debugging
+       6a. Web (Chrome DevTools via VS Code)
+       6b. iOS  (macOS only)
+       6c. Android
+  7.  Health Check
+  8.  Stopping the System
+  9.  Troubleshooting
+
+
+================================================================================
+1. PREREQUISITES  (VS Code required)
+================================================================================
+
+Python
+  - Python 3.12 or newer
+      python3 --version     # must print 3.12.x or higher
+  - pip 23 or newer
+      pip --version
+
+Node / Expo
+  - Node.js 18 or newer
+      node --version        # must print v18.x.x or higher
+  - npm 10 or newer (bundled with Node)
+      npm --version
+
+NVIDIA GPU
+  - NVIDIA driver installed and CUDA available
+      nvidia-smi            # shows driver and CUDA version
+  - CUDA 11.8 or 12.x
+
+VS Code  (required — not optional for this guide)
+  - VS Code 1.85 or newer
+  See Section 2c for the required extension list.
+
+
+================================================================================
+2. ONE-TIME SETUP
+================================================================================
+
+------------------------------------------------------------------------
+2a. Python — Single venv for all backend components
+------------------------------------------------------------------------
+
+WHY one venv:
+  rags/weather/rag.py  is imported directly into the agent process.
+  mcps/weather/mcp.py  is spawned by the agent using sys.executable.
+  Both must use the same Python interpreter and installed packages.
+  Separate venvs cannot be used.
+
+  Step 1 — Navigate to the project root:
+    cd /path/to/wine.liquor
+
+  Step 2 — Create the venv (once only):
+    python3 -m venv venv
+
+  Step 3 — Activate the venv:
+    source venv/bin/activate              # macOS / Linux / WSL
+    venv\Scripts\activate                 # Windows cmd
+    venv\Scripts\Activate.ps1            # Windows PowerShell
+
+    Your prompt changes to show (venv) when active.
+
+  Step 4 — Install PyTorch with CUDA support FIRST (important — before anything else):
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+    WHY: rags/ uses sentence-transformers which depends on PyTorch.
+    Installing the CUDA build first (~2 GB) pins torch before
+    sentence-transformers can pull a different version.
+    CUDA 12.1 is used above. Check your driver version first:
+      nvidia-smi                 # shows CUDA version in top-right corner
+    If your GPU uses CUDA 11.8, replace cu121 with cu118:
+      pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    For CPU-only machines (no GPU), use startup.nogpu.debug.readme.txt instead.
+
+  Step 5 — Install all backend dependencies:
+    pip install -r ai.agents/weather/requirements.txt
+    pip install -r rags/weather/requirements.txt
+    pip install -r mcps/weather/requirements.txt
+
+  Step 6 — Verify the install:
+    python -c "import fastapi, anthropic, chromadb, mcp; print('OK')"
+    # Expected output: OK
+
+
+------------------------------------------------------------------------
+2b. Expo — UI install
+------------------------------------------------------------------------
+
+  Step 1 — Navigate to the ui/ folder:
+    cd /path/to/wine.liquor/ui
+
+  Step 2 — Install all Node packages (once only):
+    npm install
+
+  Step 3 — Verify:
+    npx expo --version      # prints the Expo CLI version
+
+
+------------------------------------------------------------------------
+2c. VS Code extensions
+------------------------------------------------------------------------
+
+  Required for Python debugging:
+    ms-python.python                  Python + debugpy
+
+  Required for web (Chrome) debugging:
+    ms-vscode.js-debug-nightly        Better source maps for Metro/web
+
+  Required for iOS / Android debugging:
+    expo.vscode-expo-tools            Expo IntelliSense + launch.json support
+    msjsdiag.vscode-react-native      Hermes/CDP debugger for iOS + Android
+
+  Install all at once from the VS Code terminal:
+    code --install-extension ms-python.python
+    code --install-extension ms-vscode.js-debug-nightly
+    code --install-extension expo.vscode-expo-tools
+    code --install-extension msjsdiag.vscode-react-native
+
+  Verify the launch configs are present:
+    The file .vscode/launch.json at the project root contains:
+      "Debug: Weather AI (Python + Web)"   ← compound
+      "Debug: Weather Agent"               ← Python only
+      "Debug: Web — Launch Chrome"         ← web only
+      "Debug: Web — Attach Chrome"         ← attach to existing Chrome
+      "Debug: DuckDB API"
+      "Debug: Current File"
+    The file .vscode/tasks.json contains:
+      "Start Expo Web"                     ← background Metro task
+
+
+================================================================================
+3. REQUIRED .env VALUES
+================================================================================
+
+The root .env file must have these set before starting the system:
+
+  ANTHROPIC_API_KEY=sk-ant-...      # required when LLM_PROVIDER=claude
+                                    # used ONLY for Anthropic API — do not
+                                    # share with other providers
+  LLM_PROVIDER=claude               # active provider
+  AGENT_PORT=8001                   # agent server port
+  EXPO_PUBLIC_AGENT_URL=http://localhost:8001   # UI → agent URL
+
+The .env is gitignored. Never commit it.
+See README.md "ANTHROPIC_API_KEY usage rule" for the key isolation policy.
+
+
+================================================================================
+4. STARTING THE SYSTEM IN DEBUG MODE
+================================================================================
+
+------------------------------------------------------------------------
+4a. Compound session — Python + Web together  (recommended)
+------------------------------------------------------------------------
+
+  This is the single-F5 path. VS Code starts the Expo Metro server as a
+  background task, waits until it is ready, then launches the Python
+  debugger and the Chrome debugger simultaneously.
+
+  Step 1 — Open VS Code at the project root:
+    code /path/to/wine.liquor
+
+  Step 2 — Ensure no other process is using port 8001 or 8081:
+    lsof -i :8001 | grep LISTEN
+    lsof -i :8081 | grep LISTEN
+    kill -9 <PID>  if anything is listed
+
+  Step 3 — Set breakpoints in Python and/or TypeScript now (optional).
+    Python:     open ai.agents/weather/agent.py, click in the gutter
+    TypeScript: open any .tsx / .ts file in ui/, click in the gutter
+
+  Step 4 — Open Run & Debug:
+    Ctrl+Shift+D  OR  click the bug+play icon in the Activity Bar.
+
+  Step 5 — Select the compound and press F5:
+    Choose "Debug: Weather AI (Python + Web)" from the dropdown.
+    Press F5.
+
+    What happens:
+      a. VS Code runs the "Start Expo Web" task in a dedicated terminal.
+         Metro output appears in the "Expo Metro" terminal panel.
+      b. VS Code waits for "Web is waiting on http://localhost:8081".
+      c. Python debugger starts agent.py. The integrated terminal shows
+         uvicorn starting on port 8001.
+      d. Chrome debugger launches a new Chrome window at localhost:8081.
+      e. The status bar turns orange — both debuggers are attached.
+      f. Two entries appear in the Call Stack panel:
+           Python session  — agent.py frames
+           JavaScript session — browser/React frames
+
+  Step 6 — Interact with the app to trigger breakpoints:
+    Open http://localhost:8081 in the Chrome window that VS Code launched.
+    Navigate to the Weather AI page and ask a question.
+    VS Code pauses at whichever breakpoint is hit first —
+    Python or JavaScript.
+
+  Step 7 — Stop:
+    Ctrl+Shift+F5  OR  click Stop All in the debug toolbar.
+    Both debuggers and the Metro server stop together.
+
+
+------------------------------------------------------------------------
+4b. Python agent only
+------------------------------------------------------------------------
+
+  Use this when you only need to debug the Python side and do not
+  need Chrome source-map debugging for the UI.
+
+  Step 1 — Start the Expo Metro server in a terminal (keep it running):
+    cd /path/to/wine.liquor/ui
+    npx expo start --web
+    Wait for: "Web is waiting on http://localhost:8081"
+
+  Step 2 — In VS Code (Run & Debug panel):
+    Select "Debug: Weather Agent" → F5.
+    The Python debugger starts agent.py.
+    Status bar turns orange.
+
+  Step 3 — Open http://localhost:8081 in any browser.
+    Interact with the app — Python breakpoints fire normally.
+
+  Step 4 — Stop:
+    Shift+F5  (stops Python only — Metro keeps running).
+
+
+------------------------------------------------------------------------
+4c. Web UI only
+------------------------------------------------------------------------
+
+  Use this when you only need to debug the TypeScript/React side and
+  the Python agent is already running (e.g. started via the script).
+
+  Step 1 — Start the Python agent in a terminal:
+    cd /path/to/wine.liquor
+    source venv/bin/activate
+    python ai.agents/weather/agent.py
+    Wait for: "Uvicorn running on http://0.0.0.0:8001"
+
+  Step 2 — Start the Expo Metro server in a second terminal:
+    cd ui/
+    npx expo start --web
+    Wait for: "Web is waiting on http://localhost:8081"
+
+  Step 3 — In VS Code (Run & Debug panel):
+    Select "Debug: Web — Launch Chrome" → F5.
+    Chrome opens, status bar turns orange.
+
+  Variant — attach to a Chrome you already have open:
+    Start Chrome with:  google-chrome --remote-debugging-port=9222
+    Select "Debug: Web — Attach Chrome" → F5.
+
+  Step 4 — Stop:
+    Shift+F5  (stops Chrome debugger — terminals keep running).
+
+
+================================================================================
+5. PYTHON DEBUGGING
+================================================================================
+
+------------------------------------------------------------------------
+5a. Breakpoints
+------------------------------------------------------------------------
+
+  Setting a breakpoint:
+    Open any .py file, click in the left gutter → red dot appears.
+    The debugger pauses execution when that line is reached.
+
+  Good places to break in agent.py:
+    ask()          — on each incoming HTTP request; inspect city, question
+    _run_agent()   — before RAG + MCP calls; inspect rag_chunks, messages
+    _run_claude()  — before/after each Anthropic API call; inspect response
+
+  Conditional breakpoint:
+    Right-click a breakpoint dot → "Edit Breakpoint" → enter a condition.
+    Example:  city == "Tokyo"
+    The debugger only pauses when the condition is true.
+
+  Logpoint (no code change needed):
+    Right-click gutter → "Add Logpoint" → enter a message.
+    Example:  RAG returned {len(rag_chunks)} chunks
+    Prints to the debug console without pausing execution.
+
+
+------------------------------------------------------------------------
+5b. Stepping through code
+------------------------------------------------------------------------
+
+  F5            Continue          — run to the next breakpoint
+  F10           Step Over         — run the current line; stay in this function
+  F11           Step Into         — enter the function being called
+  Shift+F11     Step Out          — finish the current function; pause on return
+  Shift+F5      Stop              — terminate the debug session
+
+
+------------------------------------------------------------------------
+5c. Inspecting state
+------------------------------------------------------------------------
+
+  Variables panel:
+    Shows local and global variables at the current stack frame.
+    Expand objects with the ▶ arrow.
+
+  Watch panel:
+    Add any Python expression — it is evaluated live at every pause.
+    Useful expressions:
+      city
+      question
+      rag_chunks
+      len(messages)
+      response.content[0].type
+
+  Call Stack panel:
+    Shows the full call chain from the request handler inward.
+    Click any frame to jump to it and see its local variables.
+    Frames marked with (asyncio) are coroutine frames from the event loop.
+
+  Debug console:
+    Type any Python expression and press Enter to evaluate it at the
+    current paused frame. The result prints immediately.
+    Examples:
+      city.upper()
+      [c["text"] for c in rag_chunks]
+      len(response.content)
+
+
+------------------------------------------------------------------------
+5d. Tips
+------------------------------------------------------------------------
+
+  Stepping into async code:
+    agent.py is fully async (FastAPI + asyncio).
+    F11 Step Into works across await boundaries.
+    The Call Stack panel shows coroutine frames.
+
+  justMyCode:
+    "justMyCode": false in launch.json lets you step into fastapi,
+    anthropic, and mcp library source.
+    Change to true to stay in your own files only.
+
+  Viewing MCP subprocess output:
+    mcps/weather/mcp.py runs as a subprocess. Its stdout/stderr appears
+    in the integrated terminal, not in the debug console.
+    To trace mcp.py without a second debugger:
+      Add print() statements to mcp.py temporarily.
+    To inspect MCP arguments without entering the subprocess:
+      Set a breakpoint in agent.py just before session.call_tool()
+      and read the tool name and arguments in the Variables panel.
+
+
+================================================================================
+6. WEB (EXPO) DEBUGGING
+================================================================================
+
+------------------------------------------------------------------------
+6a. Web — Chrome DevTools via VS Code
+------------------------------------------------------------------------
+
+  Prerequisite: Expo Metro server running on port 8081.
+  (The compound in Section 4a starts it automatically.)
+
+  Breakpoints:
+    Open any .tsx or .ts file in ui/.
+    Click in the left gutter next to a line — red dot appears.
+    Interact with the app in Chrome — VS Code pauses at the breakpoint.
+
+  Good places to break in ui/:
+    HomePage.tsx          — handleSend(); inspect input, messages state
+    LoginForm.tsx         — submit(); inspect field.value, canSubmit
+    lib/UserStore.ts      — register(), verify(); inspect stored users
+    lib/PasswordValidation.ts — validate(); inspect the input value
+
+  Stepping:
+    Same keyboard shortcuts as Python (F5, F10, F11, Shift+F11).
+    The Call Stack panel shows the JavaScript/React call chain.
+
+  Inspecting state:
+    Variables panel: shows JavaScript locals and closures.
+    Watch panel: evaluate any JavaScript expression, e.g.:
+      messages.length
+      field.value.trim()
+      JSON.stringify(settings)
+    Debug console: type any JavaScript expression + Enter.
+
+  Source map note:
+    VS Code resolves breakpoints in .tsx source via Metro's source maps.
+    If a breakpoint shows as "unverified" (grey dot), reload the app once
+    to let Metro rebuild the bundle, then the dot turns red.
+
+  Variant — attach to an existing Chrome session:
+    Start Chrome with remote debugging enabled:
+      google-chrome --remote-debugging-port=9222
+    Then in VS Code: select "Debug: Web — Attach Chrome" → F5.
+    This keeps your Chrome session and history alive between debug restarts.
+
+
+------------------------------------------------------------------------
+6b. iOS debugging  (macOS only)
+------------------------------------------------------------------------
+
+  Prerequisite: Xcode + iOS Simulator installed.
+
+  Step 1 — Start the iOS dev server:
+    cd ui/
+    bash debug-ios.sh
+    Wait for the iOS Simulator to open and show the home screen.
+
+  Step 2 — In VS Code (Run & Debug panel):
+    Select "Debug: iOS — Hermes" → F5.
+    Wait for "Hermes runtime ready." Status bar turns orange.
+
+  Step 3 — Set breakpoints and interact with the app in the simulator.
+
+  If debugger stays on "Connecting...":
+    In the Simulator: Cmd+Ctrl+Z → "Open JS Debugger" → retry F5.
+
+
+------------------------------------------------------------------------
+6c. Android debugging
+------------------------------------------------------------------------
+
+  Step 1 — Start the Android Emulator:
+    emulator -avd Pixel_8_API_34 &
+    Wait for: adb devices → "emulator-5554   device"
+
+  Step 2 — Start the Android dev server:
+    cd ui/
+    bash debug-android.sh
+    Wait for the app to appear on the emulator home screen.
+
+  Step 3 — In VS Code (Run & Debug panel):
+    Select "Debug: Android — Hermes" → F5.
+    Wait for "Hermes runtime ready." Status bar turns orange.
+
+  If debugger stays on "Connecting...":
+    Emulator → Ctrl+M → "Open JS Debugger" → retry F5.
+    OR: adb shell input keyevent 82
+
+
+================================================================================
+7. HEALTH CHECK
+================================================================================
+
+Verify the Python agent is running (works regardless of how it was started):
+
+  curl http://localhost:8001/health
+
+  Expected response:
+    {"status":"ok","default_provider":"claude","model":"claude-sonnet-4-6"}
+
+Verify the UI can reach the agent:
+  Open the app in Chrome.
+  Navigate to the Weather AI page and ask a question.
+  A real answer appears if the agent is reachable.
+  An error bubble shows the exact failure message if not.
+
+
+================================================================================
+8. STOPPING THE SYSTEM
+================================================================================
+
+Compound session (Section 4a):
+  Ctrl+Shift+F5  OR  Stop All button in the debug toolbar.
+  Stops both debuggers and the Metro background task.
+
+Individual sessions (Sections 4b / 4c):
+  Shift+F5  OR  the red square in the debug toolbar.
+  Stops only the active debug session.
+  Terminate the terminal processes (Metro, agent) with Ctrl+C.
+
+Deactivate the venv when done:
+  deactivate
+
+
+================================================================================
+9. TROUBLESHOOTING
+================================================================================
+
+"address already in use" on port 8001
+  Another process is holding port 8001 — possibly a previous debug run.
+    lsof -i :8001 | grep LISTEN
+    kill -9 <PID>
+  Then press F5 again.
+
+"address already in use" on port 8081
+  Metro is already running from a previous session.
+  Either attach to it (Section 4b/4c) or kill it:
+    lsof -i :8081 | grep LISTEN
+    kill -9 <PID>
+    npx expo start --web --clear
+
+Breakpoint shows as unverified (grey dot) in TypeScript
+  Metro has not yet built a bundle with source maps for that file.
+  Interact with the app once to trigger a bundle, then the dot turns red.
+  If still grey: stop the debugger, run  npx expo start --web --clear,
+  wait for Metro to rebuild, then F5 again.
+
+Debugger stops at node_modules code unexpectedly
+  The source map pointed into a library frame.
+  Press F5 (Continue) to skip past it.
+  To prevent it: ensure skipFiles includes node_modules in launch.json.
+
+"ModuleNotFoundError" when agent starts
+  The venv is not activated, or a package was not installed.
+    source venv/bin/activate
+    pip install -r ai.agents/weather/requirements.txt
+    pip install -r rags/weather/requirements.txt
+    pip install -r mcps/weather/requirements.txt
+
+RAG model slow on first breakpoint after agent starts
+  all-MiniLM-L6-v2 loads on the first question. Subsequent requests are fast.
+  This is normal — not a hang.
+
+Chrome window does not open / "Cannot connect to runtime"
+  Metro is not running yet. Stop the debug session, start Metro manually:
+    cd ui && npx expo start --web
+  Wait for "Web is waiting on http://localhost:8081", then F5 again.
+
+iOS/Android "Hermes runtime ready" never appears
+  See the native debugger setup steps in ui/README.txt Section 5.

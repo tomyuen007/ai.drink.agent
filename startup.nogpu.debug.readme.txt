@@ -53,7 +53,28 @@ Node / Expo
 
 VS Code  (required — not optional for this guide)
   - VS Code 1.85 or newer
-  See Section 2c for the required extension list.
+
+  Extension requirements by debug target:
+
+  Python (.py files)
+    ms-python.python  — REQUIRED
+    Without it, clicking the gutter in any .py file does nothing.
+      Ctrl+Shift+X → search "ms-python.python" → Install → Reload VS Code
+      OR: code --install-extension ms-python.python
+
+  Web / Chrome (.tsx and .ts files)
+    No extension required — VS Code ships with the JavaScript debugger
+    built in. TypeScript breakpoints work out of the box.
+    ms-vscode.js-debug-nightly — optional, recommended for better
+    Metro source map resolution (breakpoints land on the correct line).
+
+  iOS / Android (Hermes)
+    expo.vscode-expo-tools    — REQUIRED
+    msjsdiag.vscode-react-native — REQUIRED
+      code --install-extension expo.vscode-expo-tools
+      code --install-extension msjsdiag.vscode-react-native
+
+  See Section 2c for the full install commands.
 
 
 ================================================================================
@@ -121,17 +142,20 @@ WHY one venv:
 2c. VS Code extensions
 ------------------------------------------------------------------------
 
-  Required for Python debugging:
-    ms-python.python                  Python + debugpy
+  Python debugging (.py files):
+    ms-python.python                  REQUIRED — enables gutter breakpoints
+                                      Without it, clicking the gutter does nothing
 
-  Required for web (Chrome) debugging:
-    ms-vscode.js-debug-nightly        Better source maps for Metro/web
+  Web / Chrome debugging (.tsx / .ts files):
+    (none required)                   Built into VS Code — works out of the box
+    ms-vscode.js-debug-nightly        Optional — better Metro source maps;
+                                      install if breakpoints land on wrong lines
 
-  Required for iOS / Android debugging:
-    expo.vscode-expo-tools            Expo IntelliSense + launch.json support
-    msjsdiag.vscode-react-native      Hermes/CDP debugger for iOS + Android
+  iOS / Android debugging (Hermes):
+    expo.vscode-expo-tools            REQUIRED — Expo launch.json support
+    msjsdiag.vscode-react-native      REQUIRED — Hermes/CDP debugger
 
-  Install all at once from the VS Code terminal:
+  Install everything at once:
     code --install-extension ms-python.python
     code --install-extension ms-vscode.js-debug-nightly
     code --install-extension expo.vscode-expo-tools
@@ -523,6 +547,15 @@ Debugger stops at node_modules code unexpectedly
   The source map pointed into a library frame.
   Press F5 (Continue) to skip past it.
   To prevent it: ensure skipFiles includes node_modules in launch.json.
+
+Clicking gutter in a .py file does nothing / cannot set breakpoints
+  The ms-python.python extension is not installed.
+    Ctrl+Shift+X → search "ms-python.python" → Install → Reload VS Code
+    OR: code --install-extension ms-python.python
+  After installing, open agent.py and click the gutter — a solid red
+  dot appears immediately without needing to start the debugger first.
+  Also confirm VS Code is opened at the project root (wine.liquor/),
+  not inside a subfolder like ui/.
 
 "ModuleNotFoundError" when agent starts
   The venv is not activated, or a package was not installed.

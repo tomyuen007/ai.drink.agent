@@ -112,7 +112,13 @@ app.add_middleware(
 class AskRequest(BaseModel):
     city:     str
     question: str
-    provider: str | None = None  # app sends this to override the server's LLM_PROVIDER
+    provider: str | None = None
+
+
+class ChatRequest(BaseModel):
+    message:  str
+    history:  list[dict] | None = None
+    provider: str | None = None
 
 
 # ── Agent entry point ─────────────────────────────────────────────────────────
@@ -319,9 +325,18 @@ async def _run_bedrock(session, tools_list, system, city, question, client, mode
 
 # ── HTTP endpoints ────────────────────────────────────────────────────────────
 
+_PLACEHOLDER_KEYS = {"", "sk-ant-your-key-here"}
+
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "default_provider": PROVIDER, "model": _get_model(PROVIDER)}
+    key = os.getenv("ANTHROPIC_API_KEY", "")
+    return {
+        "status":               "ok",
+        "default_provider":     PROVIDER,
+        "model":                _get_model(PROVIDER),
+        "anthropic_key_valid":  key not in _PLACEHOLDER_KEYS,
+    }
 
 
 @app.post("/ask")
@@ -338,6 +353,21 @@ async def ask(req: AskRequest):
             "city": req.city, "question": req.question,
             "answer": answer, "provider": provider,
         }
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"error": str(exc)})
+
+
+@app.post("/chat")
+async def chat(req: ChatRequest):
+    try:
+        provider = (req.provider or PROVIDER).lower()
+        if provider not in _VALID_PROVIDERS:
+            return JSONResponse(
+                status_code=400,
+                content={"error": f"Unknown provider {provider!r}. Valid: {', '.join(sorted(_VALID_PROVIDERS))}"},
+            )
+        answer = await _run_agent("general", req.message, provider)
+        return {"answer": answer, "provider": provider}
     except Exception as exc:
         return JSONResponse(status_code=500, content={"error": str(exc)})
 

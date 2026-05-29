@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { S } from "../lib/styles";
 import Menu from "../components/Menu";
+import ApiKeyWarningModal from "../components/ApiKeyWarningModal";
 import { useAppSelector } from "../store/hooks";
 
 const AGENT_URL = process.env.EXPO_PUBLIC_AGENT_URL ?? "http://localhost:8001";
@@ -35,11 +36,12 @@ export default function HomePage() {
       text: "Hi! I'm your Wine & Liquor AI assistant. Ask me anything about wines, spirits, cocktails, or pairings.",
     },
   ]);
-  const [input,   setInput]   = useState("");
-  const [loading, setLoading] = useState(false);
-  const scrollRef             = useRef<ScrollView>(null);
-  const online                = useAppSelector((s) => s.settings.online);
-  const llmProvider           = useAppSelector((s) => s.settings.llmProvider);
+  const [input,      setInput]      = useState("");
+  const [loading,    setLoading]    = useState(false);
+  const [keyWarning, setKeyWarning] = useState(false);
+  const scrollRef                   = useRef<ScrollView>(null);
+  const online                      = useAppSelector((s) => s.settings.online);
+  const llmProvider                 = useAppSelector((s) => s.settings.llmProvider);
 
   const canSend = input.trim().length > 0 && !loading;
 
@@ -47,6 +49,13 @@ export default function HomePage() {
     const t = setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
     return () => clearTimeout(t);
   }, [messages, loading]);
+
+  useEffect(() => {
+    fetch(`${AGENT_URL}/health`)
+      .then((r) => r.json())
+      .then((data) => { if (data.anthropic_key_valid === false) setKeyWarning(true); })
+      .catch(() => {});
+  }, []);
 
   async function send() {
     const text = input.trim();
@@ -114,6 +123,8 @@ export default function HomePage() {
   }
 
   return (
+    <>
+    <ApiKeyWarningModal visible={keyWarning} onClose={() => setKeyWarning(false)} />
     <KeyboardAvoidingView
       className={S.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -187,5 +198,6 @@ export default function HomePage() {
         </Pressable>
       </View>
     </KeyboardAvoidingView>
+    </>
   );
 }

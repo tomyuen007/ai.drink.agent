@@ -503,6 +503,35 @@ curl http://localhost:11434/api/tags
 
 `ANTHROPIC_API_KEY` is used **exclusively** when `LLM_PROVIDER=claude`. It must not be passed to, reused by, or shared with any other provider (OpenAI, Groq, Gemini, Bedrock, Ollama, or openai-compat). Each provider authenticates with its own dedicated key (`OPENAI_API_KEY`, `GROQ_API_KEY`, `GOOGLE_API_KEY`, etc.). This rule is enforced by the `.env` comment and `ai.agents/weather/agent.py`, which only reads `ANTHROPIC_API_KEY` inside the `claude` provider branch.
 
+### Setting up your Anthropic API key — `do.not.share.json`
+
+The Anthropic API key is stored in a **gitignored** file so it is never accidentally committed to version control.
+
+**First-time setup:**
+
+```bash
+# 1. Copy the sample file to create your local secrets file
+cp sample.do.not.share.json do.not.share.json
+
+# 2. Edit do.not.share.json and replace the placeholder with your real key
+#    Before: { "ANTHROPIC_API_KEY": "sk-ant-your-key-here" }
+#    After:  { "ANTHROPIC_API_KEY": "sk-ant-api03-..." }
+```
+
+Get your key at **console.anthropic.com** → API Keys.
+
+**Rules:**
+- `do.not.share.json` is listed in `.gitignore` — it is **never** committed
+- `sample.do.not.share.json` is committed and contains the placeholder `sk-ant-your-key-here` — safe to share
+- The agent reads the key via `lib/secrets.py` → `load_secrets()` before `load_dotenv()`, so the key in `do.not.share.json` always takes precedence over any value in `.env`
+- If the key is missing or still set to the placeholder, the UI will show a **red warning modal** on startup — dismiss it after fixing the key and restarting the agent
+
+**If you see the red modal ("Anthropic API Key Required"):**
+
+1. Copy `sample.do.not.share.json` → `do.not.share.json` (if you haven't already)
+2. Replace `sk-ant-your-key-here` with your real key
+3. Restart the Python agent — the modal will not appear again
+
 ---
 
 ## System Startup Guides

@@ -15,8 +15,11 @@ from pydantic import BaseModel
 
 ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT / "rags" / "weather"))
-from rag import retrieve  # noqa: E402
+sys.path.insert(0, str(ROOT))
+from rag import retrieve          # noqa: E402
+from lib.secrets import load_secrets  # noqa: E402
 
+load_secrets(ROOT)
 load_dotenv(ROOT / ".env")
 
 # Default provider read from server .env (used when the app sends no override).

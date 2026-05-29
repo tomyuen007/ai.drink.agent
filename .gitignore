@@ -1,6 +1,5 @@
-# Secrets
-.env
-ui/.env
+# Secrets — never commit this file
+do.not.share.json
 
 # Python
 __pycache__/

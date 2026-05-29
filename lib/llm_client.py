@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
+from lib.secrets import load_secrets
 
+load_secrets()
 load_dotenv()
 
 

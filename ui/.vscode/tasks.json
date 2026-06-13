@@ -2,12 +2,26 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "npm install",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "label": "npm install"
+      }
+    },
+    {
       "label": "Start Expo Web",
       "type": "shell",
       "command": "npx expo start --web",
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "dependsOn": ["npm install"],
       "isBackground": true,
       "problemMatcher": {
         "owner": "expo",

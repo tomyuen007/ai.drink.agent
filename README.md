@@ -547,7 +547,16 @@ Get your key at **console.anthropic.com** → API Keys.
 
 The run guides cover: one-time venv setup, Expo UI install, required `.env` values, daily terminal-based startup, Python debugging summary, Expo debugging summary, health check, and troubleshooting.
 
-The debug guides cover: same setup, then VS Code compound launch (Python + Chrome in one F5), individual Python-only and Web-only debug sessions, detailed breakpoints / stepping / state inspection for both Python and TypeScript, and debug-specific troubleshooting.
+The debug guides cover: same setup, then VS Code independent-window debug sessions (one window per component), detailed breakpoints / stepping / state inspection for both Python and TypeScript, and debug-specific troubleshooting.
+
+**Decision (2026-06-13):** Always show and use independent VS Code windows for debugging — one window per component. Never use the compound "all-in-one" launch config. Each component is opened and debugged in its own VS Code instance:
+
+| VS Code window opens at | Config to run |
+|---|---|
+| project root | `Debug: Weather Agent` |
+| project root | `Debug: RAG` |
+| project root | `Debug: MCP` |
+| `ui/` | `Debug: Weather UI (Web)` |
 
 The key difference between GPU and CPU variants is Step 4 of the venv setup:
 

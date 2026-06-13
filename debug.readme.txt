@@ -1,0 +1,77 @@
+================================================================================
+  Weather AI — Debug Quick Reference
+  Independent VS Code windows — one per component
+================================================================================
+
+Decision (2026-06-13): Always debug each component in its own VS Code window.
+Never use the compound "Debug: Weather AI (Python + Web)" all-in-one config.
+
+For full debug setup (venv, extensions, breakpoints, tips):
+  CPU-only / WSL  →  startup.nogpu.debug.readme.txt
+  GPU / CUDA      →  startup.gpu.debug.readme.txt
+
+
+================================================================================
+STEPS
+================================================================================
+
+Open each component in its own VS Code window.
+
+------------------------------------------------------------------------
+Window 1 — Python Agent  (port 8001)
+------------------------------------------------------------------------
+
+  code /path/to/wine.liquor
+
+  Ctrl+Shift+D  →  "Debug: Weather Agent"  →  F5
+
+  Expected: INFO: Uvicorn running on http://0.0.0.0:8001
+
+
+------------------------------------------------------------------------
+Window 2 — RAG  (standalone test)
+------------------------------------------------------------------------
+
+  code /path/to/wine.liquor
+
+  Ctrl+Shift+D  →  "Debug: RAG"  →  F5
+
+  Expected: prints top knowledge chunks for the test query
+
+
+------------------------------------------------------------------------
+Window 3 — MCP  (standalone test)
+------------------------------------------------------------------------
+
+  code /path/to/wine.liquor
+
+  Ctrl+Shift+D  →  "Debug: MCP"  →  F5
+
+  Expected: prints get_current_weather and get_forecast JSON for Tokyo
+
+
+------------------------------------------------------------------------
+Window 4 — Expo UI  (port 8081)
+------------------------------------------------------------------------
+
+  code /path/to/wine.liquor/ui
+
+  Ctrl+Shift+D  →  "Debug: Weather UI (Web)"  →  F5
+
+  Metro starts automatically. Chrome opens at http://localhost:8081.
+  WSL: if Chrome does not open, paste http://localhost:8081 into browser.
+
+
+================================================================================
+HEALTH CHECK
+================================================================================
+
+  curl http://localhost:8001/health
+
+
+================================================================================
+STOP
+================================================================================
+
+  Each window: Shift+F5
+  Agent window: deactivate   (after stopping debugger)

@@ -1,22 +1,41 @@
 {
-  // VS Code debug configurations for Weather AI (Expo SDK 52 / RN 0.76 / Hermes)
+  // VS Code debug configurations for Weather AI (Expo SDK 56 / RN 0.85 / Hermes)
   //
   // Prerequisites — install these VS Code extensions:
   //   expo.vscode-expo-tools       (Expo Tools)
   //   msjsdiag.vscode-react-native (React Native Tools)
+  //   ms-vscode.js-debug-nightly   (Better web source maps — recommended)
   //
-  // Before launching any config:
-  //   Web    → run debug-web.sh first, wait for http://localhost:8081
-  //   iOS    → run debug-ios.sh first, wait for simulator to open the app
-  //   Android→ run debug-android.sh first, wait for emulator to open the app
+  // Open VS Code at the ui/ folder:
+  //   code /path/to/wine.liquor/ui
+  //
+  // One-click start:
+  //   Ctrl+Shift+D → "Debug: Weather UI (Web)" → F5
+  //   Metro starts automatically, Chrome opens when ready.
+  //   Ctrl+Shift+F5 stops everything.
+  //
+  // Manual configs — Metro must already be running (npx expo start --web):
+  //   "Debug: Web — Launch Chrome"   opens a new Chrome window
+  //   "Debug: Web — Attach Chrome"   attaches to existing Chrome on port 9222
+  //   "Debug: iOS — Hermes"          attaches to iOS Simulator (run debug-ios.sh first)
+  //   "Debug: Android — Hermes"      attaches to Android Emulator (run debug-android.sh first)
+
   "version": "0.2.0",
+
+  "compounds": [
+    {
+      "name": "Debug: Weather UI (Web)",
+      "configurations": ["Debug: Web — Launch Chrome"],
+      "stopAll": true,
+      "preLaunchTask": "Start Expo Web"
+    }
+  ],
+
   "configurations": [
 
     // ── Web ──────────────────────────────────────────────────────────────────
 
     {
-      // Launches a new Chrome window at localhost:8081 with the debugger
-      // attached. Source maps are resolved automatically from the Expo bundler.
       "name": "Debug: Web — Launch Chrome",
       "type": "chrome",
       "request": "launch",
@@ -34,9 +53,7 @@
     },
 
     {
-      // Attaches to an existing Chrome instance that was started with
-      //   google-chrome --remote-debugging-port=9222
-      //   (or: npx expo start --web, then open Chrome via the QR/URL)
+      // Attaches to an existing Chrome started with --remote-debugging-port=9222.
       // Use this to keep your Chrome session alive between debug restarts.
       "name": "Debug: Web — Attach Chrome",
       "type": "chrome",
@@ -55,7 +72,7 @@
 
     {
       // Attaches the Hermes/CDP debugger to the iOS Simulator.
-      // Start debug-ios.sh first and wait for the app to load.
+      // Run debug-ios.sh first and wait for the app to load.
       // If connection fails: Cmd+Ctrl+Z in simulator → "Open JS Debugger".
       "name": "Debug: iOS — Hermes",
       "type": "reactnativedirect",
@@ -77,7 +94,7 @@
 
     {
       // Attaches the Hermes/CDP debugger to the Android Emulator via ADB.
-      // Start debug-android.sh first and wait for the app to load.
+      // Run debug-android.sh first and wait for the app to load.
       // If connection fails: Ctrl+M in emulator → "Open JS Debugger".
       "name": "Debug: Android — Hermes",
       "type": "reactnativedirect",
@@ -98,8 +115,8 @@
 
     {
       // Attaches to any already-running React Native app (iOS or Android)
-      // that is in dev/debug mode. Use when the app is open and you want
-      // to attach without relaunching the simulator or emulator.
+      // in dev/debug mode. Use when the app is open and you want to attach
+      // without relaunching the simulator or emulator.
       "name": "Debug: Attach to Running App",
       "type": "reactnativedirect",
       "request": "attach",

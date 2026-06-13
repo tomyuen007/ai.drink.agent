@@ -126,4 +126,9 @@ def get_forecast(city: str, days: int = 3) -> dict:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    import json
+    test_city = "Tokyo"
+    print(f"=== get_current_weather({test_city!r}) ===")
+    print(json.dumps(get_current_weather(test_city), indent=2))
+    print(f"\n=== get_forecast({test_city!r}, days=3) ===")
+    print(json.dumps(get_forecast(test_city, days=3), indent=2))

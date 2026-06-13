@@ -35,3 +35,10 @@ def retrieve(query: str, n: int = 3) -> list[str]:
 
     results = _collection.query(query_texts=[query], n_results=n)
     return results["documents"][0] if results["documents"] else []
+
+
+if __name__ == "__main__":
+    test_query = "What should I wear in rainy weather?"
+    chunks = retrieve(test_query)
+    for i, chunk in enumerate(chunks, 1):
+        print(f"[{i}] {chunk}")

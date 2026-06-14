@@ -56,6 +56,14 @@ terrorform/**/.terraform.lock.hcl
 # Word temp files
 ~$*
 
-# Allow project VS Code debug config
+# Allow project VS Code debug configs
+!.vscode/
+!.vscode/**
 !ui/.vscode/
-!ui/.vscode/launch.json
+!ui/.vscode/**
+!ai.agents/weather/.vscode/
+!ai.agents/weather/.vscode/**
+!rags/weather/.vscode/
+!rags/weather/.vscode/**
+!mcps/weather/.vscode/
+!mcps/weather/.vscode/**

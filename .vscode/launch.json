@@ -1,0 +1,118 @@
+{
+  "version": "0.2.0",
+
+  // ── Compound ─────────────────────────────────────────────────────────────────
+  // "Debug: Weather AI (Python + Web)" is the one-click option.
+  // It starts the Expo Metro server via preLaunchTask, waits until
+  // "Web is waiting on http://localhost:8081" appears, then launches
+  // both the Python debugger and the Chrome debugger simultaneously.
+  // Ctrl+Shift+F5 (or Stop All) stops both at once.
+
+  "compounds": [
+    {
+      "name": "Debug: Weather AI (Python + Web)",
+      "configurations": ["Debug: Weather Agent", "Debug: Web — Launch Chrome"],
+      "stopAll": true,
+      "preLaunchTask": "Start Expo Web"
+    }
+  ],
+
+  "configurations": [
+
+    // ── Python ────────────────────────────────────────────────────────────────
+
+    {
+      "name": "Debug: Weather Agent",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/ai.agents/weather/agent.py",
+      "python": "${workspaceFolder}/ai.agents/weather/venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/rags/weather"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "justMyCode": false
+      // justMyCode: false → lets you step into fastapi, anthropic, mcp source
+    },
+
+    {
+      "name": "Debug: RAG",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/rags/weather/rag.py",
+      "python": "${workspaceFolder}/rags/weather/venv/bin/python",
+      "cwd": "${workspaceFolder}/rags/weather",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    {
+      "name": "Debug: MCP",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/mcps/weather/mcp.py",
+      "python": "${workspaceFolder}/mcps/weather/venv/bin/python",
+      "cwd": "${workspaceFolder}/mcps/weather",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    {
+      "name": "Debug: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "python": "${workspaceFolder}/ai.agents/weather/venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal"
+    },
+
+    // ── Expo Web ──────────────────────────────────────────────────────────────
+    // Requires the Expo Metro server to already be running on port 8081.
+    // Use the compound above to start Metro automatically, or run
+    //   cd ui && npx expo start --web
+    // in a terminal first, then launch one of these manually.
+
+    {
+      // Launches a new Chrome window at localhost:8081 with the debugger
+      // attached. Source maps are resolved via Metro's bundle URL.
+      "name": "Debug: Web — Launch Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8081",
+      "webRoot": "${workspaceFolder}/ui",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/ui/*",
+        "webpack:///./~/*": "${workspaceFolder}/ui/node_modules/*"
+      },
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/ui/node_modules/**"
+      ]
+    },
+
+    {
+      // Attaches to an existing Chrome that was started with
+      //   google-chrome --remote-debugging-port=9222
+      // Use this to keep your Chrome session alive between debug restarts.
+      "name": "Debug: Web — Attach Chrome",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:8081/*",
+      "webRoot": "${workspaceFolder}/ui",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "${workspaceFolder}/ui/node_modules/**"
+      ]
+    }
+
+  ]
+}

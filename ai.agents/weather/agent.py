@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import sys
 from pathlib import Path
 
 import uvicorn
@@ -14,17 +13,16 @@ from mcp.client.stdio import stdio_client
 from pydantic import BaseModel
 
 ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(ROOT / "rags" / "weather"))
-sys.path.insert(0, str(ROOT))
-from rag import retrieve          # noqa: E402
-from lib.secrets import load_secrets  # noqa: E402
+from rag import retrieve
+from lib.secrets import load_secrets
 
 load_secrets(ROOT)
 load_dotenv(ROOT / ".env")
 
 # Default provider read from server .env (used when the app sends no override).
 PROVIDER   = os.getenv("LLM_PROVIDER", "claude").lower()
-MCP_SERVER = str(ROOT / "mcps" / "weather" / "mcp.py")
+MCP_SERVER  = str(ROOT / "mcps" / "weather" / "mcp.py")
+MCP_PYTHON  = str(ROOT / "mcps" / "weather" / "venv" / "bin" / "python")
 
 _OPENAI_SDK_PROVIDERS = {"openai", "groq", "ollama", "openai-compat"}
 _VALID_PROVIDERS      = {"claude", "gemini", "bedrock"} | _OPENAI_SDK_PROVIDERS
@@ -137,7 +135,7 @@ async def _run_agent(city: str, question: str, provider: str) -> str:
     client = _get_client(provider)
     model  = _get_model(provider)
 
-    server_params = StdioServerParameters(command=sys.executable, args=[MCP_SERVER])
+    server_params = StdioServerParameters(command=MCP_PYTHON, args=[MCP_SERVER])
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()

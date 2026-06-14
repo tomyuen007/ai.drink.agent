@@ -1,5 +1,11 @@
 # ── Core (always required) ────────────────────────────────────────────────────
 anthropic>=0.25.0
+
+# ── RAG (rag.py is imported directly — must be in this venv) ─────────────────
+# Install torch CPU-only FIRST before this file:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
 python-dotenv>=1.0.0
 fastapi>=0.110.0
 uvicorn>=0.29.0

@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: MCP",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/mcp.py",
+      "python": "${workspaceFolder}/venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/../../.env",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

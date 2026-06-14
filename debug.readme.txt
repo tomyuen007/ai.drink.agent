@@ -5,6 +5,8 @@
 
 Decision (2026-06-13): Always debug each component in its own VS Code window.
 Never use the compound "Debug: Weather AI (Python + Web)" all-in-one config.
+Each file (agent.py, rag.py, mcp.py) can only be debugged in its own window —
+opening it in another window lets you read the code but not debug it.
 
 For full debug setup (venv, extensions, breakpoints, tips):
   CPU-only / WSL  →  startup.nogpu.debug.readme.txt
@@ -21,19 +23,27 @@ Open each component in its own VS Code window.
 Window 1 — Python Agent  (port 8001)
 ------------------------------------------------------------------------
 
-  code /path/to/wine.liquor
+  code /mnt/c/git/work/claude.code/ai.agent/wine.liquor/ai.agents/weather
 
+  Open agent.py, set breakpoints, then:
   Ctrl+Shift+D  →  "Debug: Weather Agent"  →  F5
 
   Expected: INFO: Uvicorn running on http://0.0.0.0:8001
+
+  Good lines to break on:
+    rag_chunks = retrieve(...)           every incoming request
+    server_params = StdioServerParameters(...)  before MCP subprocess spawns
+    response = client.messages.create(...)      before Claude API call
+    return await _run_claude(...)               after provider is selected
 
 
 ------------------------------------------------------------------------
 Window 2 — RAG  (standalone test)
 ------------------------------------------------------------------------
 
-  code /path/to/wine.liquor
+  code /mnt/c/git/work/claude.code/ai.agent/wine.liquor/rags/weather
 
+  Open rag.py, set breakpoints, then:
   Ctrl+Shift+D  →  "Debug: RAG"  →  F5
 
   Expected: prints top knowledge chunks for the test query
@@ -43,8 +53,9 @@ Window 2 — RAG  (standalone test)
 Window 3 — MCP  (standalone test)
 ------------------------------------------------------------------------
 
-  code /path/to/wine.liquor
+  code /mnt/c/git/work/claude.code/ai.agent/wine.liquor/mcps/weather
 
+  Open mcp.py, set breakpoints, then:
   Ctrl+Shift+D  →  "Debug: MCP"  →  F5
 
   Expected: prints get_current_weather and get_forecast JSON for Tokyo
@@ -54,11 +65,11 @@ Window 3 — MCP  (standalone test)
 Window 4 — Expo UI  (port 8081)
 ------------------------------------------------------------------------
 
-  code /path/to/wine.liquor/ui
+  code /mnt/c/git/work/claude.code/ai.agent/wine.liquor/ui
 
   Ctrl+Shift+D  →  "Debug: Weather UI (Web)"  →  F5
 
-  Metro starts automatically. Chrome opens at http://localhost:8081.
+  Metro and npm install run automatically. Chrome opens at http://localhost:8081.
   WSL: if Chrome does not open, paste http://localhost:8081 into browser.
 
 
@@ -74,4 +85,3 @@ STOP
 ================================================================================
 
   Each window: Shift+F5
-  Agent window: deactivate   (after stopping debugger)
